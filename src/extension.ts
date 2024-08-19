@@ -9,6 +9,10 @@ const modelConfig = require("../config.json");
 // add shortcut key and register command if required.
 // add .env api key if required.
 
+// TODO:
+// add streaming api support
+// configure how we want to send the workspace in the api as sending it all is inefficient token wise
+
 // Load environment variables from .env file
 config({ path: __dirname + "/../.env" });
 
