@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import { ExtensionContext, commands, window, workspace } from "vscode";
 import { config } from "dotenv";
 import { ApiProvider, OpenAIHelp, AnthropicHelp } from "./apiProviders";
 import { RequestData, Message } from "./types";
@@ -16,50 +16,46 @@ const modelConfig = require("../config.json");
 // Load environment variables from .env file
 config({ path: __dirname + "/../.env" });
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: ExtensionContext) {
   console.log("LLM Plugin Extension Activated");
 
   // Define the API provider to use
   let selectedModelAPI = "NONE";
 
   // Register command to select OpenAI as the provider
-  let selectOpenAI = vscode.commands.registerCommand(
-    "extension.selectOpenAI",
-    () => {
-      selectedModelAPI = "OpenAIHelp";
-      vscode.window.showInformationMessage("OpenAI selected as AI provider");
-      console.log("OpenAI selected as AI provider");
-    }
-  );
+  let selectOpenAI = commands.registerCommand("extension.selectOpenAI", () => {
+    selectedModelAPI = "OpenAIHelp";
+    window.showInformationMessage("OpenAI selected as AI provider");
+    console.log("OpenAI selected as AI provider");
+  });
 
   // Register command to select Anthropic as the provider
-  let selectAnthropic = vscode.commands.registerCommand(
+  let selectAnthropic = commands.registerCommand(
     "extension.selectAnthropic",
     () => {
       selectedModelAPI = "AnthropicHelp";
-      vscode.window.showInformationMessage("Anthropic selected as AI provider");
+      window.showInformationMessage("Anthropic selected as AI provider");
       console.log("Anthropic selected as AI provider");
     }
   );
 
-  let disposable = vscode.commands.registerCommand(
+  let disposable = commands.registerCommand(
     "extension.sendToAPI",
 
     async () => {
       console.log("Making API Request to AI provider");
-      const editor = vscode.window.activeTextEditor;
+      const editor = window.activeTextEditor;
 
       if (editor) {
         const document = editor.document;
         const fileContent = document.getText();
-        const workspaceFolder =
-          vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const workspaceFolder = workspace.workspaceFolders?.[0]?.uri.fsPath;
 
         // Get the configuration for the selected model
         const modelConfigData = modelConfig[selectedModelAPI];
 
         if (!modelConfigData) {
-          vscode.window.showErrorMessage(
+          window.showErrorMessage(
             `Configuration not found for model: ${selectedModelAPI}`
           );
           return;
@@ -98,7 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
             );
             break;
           default:
-            vscode.window.showErrorMessage("Invalid AI provider selected.");
+            window.showErrorMessage("Invalid AI provider selected.");
             return;
         }
 
@@ -112,9 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
 
           console.log("Response inserted from API.");
         } catch (error) {
-          vscode.window.showErrorMessage(
-            "Failed to get a response from the API."
-          );
+          window.showErrorMessage("Failed to get a response from the API.");
           console.error(error);
         }
       }

@@ -7,6 +7,10 @@
   "engines": {
     "vscode": "^1.92.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Darknoon5891/llm-vscode-plugin"
+  },
   "categories": [
     "Other"
   ],
