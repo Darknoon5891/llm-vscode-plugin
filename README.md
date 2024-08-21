@@ -14,4 +14,10 @@ This extension provides the following commands:
 
 - extension.selectOpenAICode: Selects OpenAI as the AI provider. This command can be triggered via the Ctrl+Alt+O (Windows/Linux) or Cmd+Alt+O (macOS) shortcut.
 - extension.selectAnthropicCode: Selects Anthropic as the AI provider. This command can be triggered via the Ctrl+Alt+N (Windows/Linux) or Cmd+Alt+N (macOS) shortcut.
+- extension.selectAnthropicHelp
+- extension.selectOpenAIHelp
 - extension.sendToAPI: Sends the code in the active editor to the currently selected AI provider. This command can be triggered via the Ctrl+Alt+X (Windows/Linux) or Cmd+E (macOS) shortcut
+
+# Dev Notes
+
+- Can build package with > vsce package
