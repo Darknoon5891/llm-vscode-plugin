@@ -37,12 +37,20 @@
     },
     "commands": [
       {
-        "command": "extension.selectOpenAI",
+        "command": "extension.selectOpenAICode",
         "title": "Send Code to OpenAI"
       },
       {
-        "command": "extension.selectAnthropic",
+        "command": "extension.selectOpenAIHelp",
+        "title": "Helper Request to OpenAI"
+      },
+      {
+        "command": "extension.selectAnthropicCode",
         "title": "Send Code to Anthropic"
+      },
+      {
+        "command": "extension.selectAnthropicHelp",
+        "title": "Helper Request to Anthropic"
       },
       {
         "command": "extension.sendToAPI",
@@ -51,13 +59,23 @@
     ],
     "keybindings": [
       {
-        "command": "extension.selectAnthropic",
-        "key": "ctrl+alt+n",
+        "command": "extension.selectAnthropicCode",
+        "key": "ctrl+alt+c",
         "when": "editorTextFocus"
       },
       {
-        "command": "extension.selectOpenAI",
-        "key": "ctrl+alt+a",
+        "command": "extension.selectAnthropicHelp",
+        "key": "ctrl+alt+v",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "extension.selectOpenAICode",
+        "key": "ctrl+alt+b",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "extension.selectOpenAIHelp",
+        "key": "ctrl+alt+n",
         "when": "editorTextFocus"
       },
       {

@@ -1,11 +1,45 @@
 import { ExtensionContext, commands, window, workspace } from "vscode";
 import { config } from "dotenv";
-import { ApiProvider, OpenAIHelp, AnthropicHelp } from "./apiProviders";
+import { ApiProvider, OpenAICode, AnthropicCode } from "./apiProviders";
 import { RequestData, Message } from "./types";
-const modelConfig = require("../config.json");
+
+const modelConfig: { [key: string]: any } = {
+  OpenAICode: {
+    model: "gpt-4o",
+    max_tokens: 1000,
+    system_prompt:
+      "You should replace the code that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```. Any comment that is asking you for something should be removed after you satisfy them. Other comments should left alone. Do not output backticks",
+    helpful_prompt:
+      "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful.",
+  },
+  OpenAIHelp: {
+    model: "gpt-4o",
+    max_tokens: 1000,
+    system_prompt:
+      "You should replace the code that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```. Any comment that is asking you for something should be removed after you satisfy them. Other comments should left alone. Do not output backticks",
+    helpful_prompt:
+      "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful.",
+  },
+  AnthropicCode: {
+    model: "claude-3-5-sonnet-20240620",
+    max_tokens: 1000,
+    system_prompt:
+      "You should replace the code that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```. Any comment that is asking you for something should be removed after you satisfy them. Other comments should left alone. Do not output backticks",
+    helpful_prompt:
+      "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful.",
+  },
+  AnthropicHelp: {
+    model: "claude-3-5-sonnet-20240620",
+    max_tokens: 1000,
+    system_prompt:
+      "You should replace the code that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```. Any comment that is asking you for something should be removed after you satisfy them. Other comments should left alone. Do not output backticks",
+    helpful_prompt:
+      "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```.",
+  },
+};
 
 // Instructions to add a new AI provider:
-// add config and function in apiProviders.ts to add a new llm provider.
+// add config above and function in apiProviders.ts to add a new llm provider.
 // add shortcut key and register command if required.
 // add .env api key if required.
 
@@ -19,18 +53,43 @@ export function activate(context: ExtensionContext) {
   let selectedModelAPI = "NONE";
 
   // Register command to select OpenAI as the provider
-  let selectOpenAI = commands.registerCommand("extension.selectOpenAI", () => {
-    selectedModelAPI = "OpenAIHelp";
-    window.showInformationMessage("OpenAI selected as AI provider");
-    console.log("OpenAI selected as AI provider");
-  });
+  let selectOpenAICode = commands.registerCommand(
+    "extension.selectOpenAICode",
+    () => {
+      selectedModelAPI = "OpenAICode";
+      window.setStatusBarMessage("(Code) OpenAI selected as AI provider", 3000);
+      console.log("OpenAI selected as AI provider");
+    }
+  );
+  // Register command to select OpenAI as the provider Help
+  let selectOpenAIHelp = commands.registerCommand(
+    "extension.selectOpenAIHelp",
+    () => {
+      selectedModelAPI = "OpenAIHelp";
+      window.setStatusBarMessage("(Help) OpenAI selected as AI provider", 3000);
+      console.log("OpenAI selected as AI provider");
+    }
+  );
 
   // Register command to select Anthropic as the provider
-  let selectAnthropic = commands.registerCommand(
-    "extension.selectAnthropic",
+  let selectAnthropicCode = commands.registerCommand(
+    "extension.selectAnthropicCode",
+    () => {
+      selectedModelAPI = "AnthropicCode";
+      window.setStatusBarMessage(
+        "(Code) Anthropic selected as AI provider",
+        3000
+      );
+      console.log("Anthropic selected as AI provider");
+    }
+  );
+
+  // Register command to select Anthropic Help as the provider
+  let selectAnthropicHelp = commands.registerCommand(
+    "extension.selectAnthropicHelp",
     () => {
       selectedModelAPI = "AnthropicHelp";
-      window.showInformationMessage("Anthropic selected as AI provider");
+      window.setStatusBarMessage("(Help) Anthropic selected as AI provider");
       console.log("Anthropic selected as AI provider");
     }
   );
@@ -57,17 +116,23 @@ export function activate(context: ExtensionContext) {
           return;
         }
 
-        // Create messages based on the selected model's configuration
-        const messages: Message[] = [
-          { role: "system", content: modelConfigData.system_prompt },
-          { role: "user", content: fileContent },
-        ];
-
+        // Create messages based on the selected model's configuration (system or helpful prompt)
+        if (selectedModelAPI.includes("Help")) {
+          modelConfigData.messages = [
+            { role: "system", content: modelConfigData.helpful_prompt },
+            { role: "user", content: fileContent },
+          ];
+        } else {
+          modelConfigData.messages = [
+            { role: "system", content: modelConfigData.system_prompt },
+            { role: "user", content: fileContent },
+          ];
+        }
         // Create the requestData object based on the selected model's configuration
         const requestData: RequestData = {
           model: modelConfigData.model,
           max_tokens: modelConfigData.max_tokens,
-          messages: messages,
+          messages: modelConfigData.messages,
         };
 
         // Choose the AI provider (for example, based on a configuration)
@@ -81,11 +146,13 @@ export function activate(context: ExtensionContext) {
         console.log("ProviderType:", selectedModelAPI);
 
         switch (selectedModelAPI) {
+          case "OpenAICode":
           case "OpenAIHelp":
-            apiProvider = new OpenAIHelp(process.env.OPENAI_API_KEY || "");
+            apiProvider = new OpenAICode(process.env.OPENAI_API_KEY || "");
             break;
+          case "AnthropicCode":
           case "AnthropicHelp":
-            apiProvider = new AnthropicHelp(
+            apiProvider = new AnthropicCode(
               process.env.ANTHROPIC_API_KEY || ""
             );
             break;

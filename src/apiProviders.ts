@@ -6,7 +6,7 @@ export interface ApiProvider {
   getResponse(requestData: RequestData): Promise<string>;
 }
 
-export class OpenAIHelp implements ApiProvider {
+export class OpenAICode implements ApiProvider {
   private apiKey: string;
 
   constructor(apiKey: string) {
@@ -33,7 +33,7 @@ export class OpenAIHelp implements ApiProvider {
   }
 }
 
-export class AnthropicHelp implements ApiProvider {
+export class AnthropicCode implements ApiProvider {
   private apiKey: string;
 
   constructor(apiKey: string) {
