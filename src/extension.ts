@@ -1,10 +1,10 @@
-import { ExtensionContext, commands, window, workspace } from "vscode";
-import { config } from "dotenv";
+import * as vscode from "vscode";
 import { ApiProvider, OpenAICode, AnthropicCode } from "./apiProviders";
 import { RequestData, Message } from "./types";
 
 const modelConfig: { [key: string]: any } = {
   OpenAICode: {
+    provider: "OpenAI",
     model: "gpt-4o",
     max_tokens: 1000,
     system_prompt:
@@ -13,6 +13,7 @@ const modelConfig: { [key: string]: any } = {
       "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful.",
   },
   OpenAIHelp: {
+    provider: "OpenAI",
     model: "gpt-4o",
     max_tokens: 1000,
     system_prompt:
@@ -21,6 +22,7 @@ const modelConfig: { [key: string]: any } = {
       "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful.",
   },
   AnthropicCode: {
+    provider: "Anthropic",
     model: "claude-3-5-sonnet-20240620",
     max_tokens: 1000,
     system_prompt:
@@ -29,6 +31,7 @@ const modelConfig: { [key: string]: any } = {
       "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful.",
   },
   AnthropicHelp: {
+    provider: "Anthropic",
     model: "claude-3-5-sonnet-20240620",
     max_tokens: 1000,
     system_prompt:
@@ -43,40 +46,41 @@ const modelConfig: { [key: string]: any } = {
 // add shortcut key and register command if required.
 // add .env api key if required.
 
-// Load environment variables from .env file
-config({ path: __dirname + "/../.env" });
-
-export function activate(context: ExtensionContext) {
+export function activate(context: vscode.ExtensionContext) {
   console.log("LLM Plugin Extension Activated");
 
   // Define the API provider to use
   let selectedModelAPI = "NONE";
 
   // Register command to select OpenAI as the provider
-  let selectOpenAICode = commands.registerCommand(
+  let selectOpenAICode = vscode.commands.registerCommand(
     "extension.selectOpenAICode",
     () => {
       selectedModelAPI = "OpenAICode";
-      window.setStatusBarMessage("(Code) OpenAI selected as AI provider", 3000);
+      vscode.window.setStatusBarMessage(
+        "(Code) OpenAI selected as AI provider"
+      );
       console.log("OpenAI selected as AI provider");
     }
   );
   // Register command to select OpenAI as the provider Help
-  let selectOpenAIHelp = commands.registerCommand(
+  let selectOpenAIHelp = vscode.commands.registerCommand(
     "extension.selectOpenAIHelp",
     () => {
       selectedModelAPI = "OpenAIHelp";
-      window.setStatusBarMessage("(Help) OpenAI selected as AI provider", 3000);
+      vscode.window.setStatusBarMessage(
+        "(Help) OpenAI selected as AI provider"
+      );
       console.log("OpenAI selected as AI provider");
     }
   );
 
   // Register command to select Anthropic as the provider
-  let selectAnthropicCode = commands.registerCommand(
+  let selectAnthropicCode = vscode.commands.registerCommand(
     "extension.selectAnthropicCode",
     () => {
       selectedModelAPI = "AnthropicCode";
-      window.setStatusBarMessage(
+      vscode.window.setStatusBarMessage(
         "(Code) Anthropic selected as AI provider",
         3000
       );
@@ -85,32 +89,36 @@ export function activate(context: ExtensionContext) {
   );
 
   // Register command to select Anthropic Help as the provider
-  let selectAnthropicHelp = commands.registerCommand(
+  let selectAnthropicHelp = vscode.commands.registerCommand(
     "extension.selectAnthropicHelp",
     () => {
       selectedModelAPI = "AnthropicHelp";
-      window.setStatusBarMessage("(Help) Anthropic selected as AI provider");
+      vscode.window.setStatusBarMessage(
+        "(Help) Anthropic selected as AI provider"
+      );
       console.log("Anthropic selected as AI provider");
     }
   );
 
-  let disposable = commands.registerCommand(
+  let disposable = vscode.commands.registerCommand(
     "extension.sendToAPI",
 
     async () => {
       console.log("Making API Request to AI provider");
-      const editor = window.activeTextEditor;
+      const editor = vscode.window.activeTextEditor;
 
       if (editor) {
         const document = editor.document;
         const fileContent = document.getText();
-        const workspaceFolder = workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const workspaceFolder =
+          vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        let selectedApiKey: string | undefined;
 
         // Get the configuration for the selected model
         const modelConfigData = modelConfig[selectedModelAPI];
 
         if (!modelConfigData) {
-          window.showErrorMessage(
+          vscode.window.showErrorMessage(
             `Configuration not found for model: ${selectedModelAPI}`
           );
           return;
@@ -136,7 +144,6 @@ export function activate(context: ExtensionContext) {
         };
 
         // Choose the AI provider (for example, based on a configuration)
-        // TODO - Link this to a shortcut key
         let apiProvider: ApiProvider;
 
         console.log("Debugging Info:");
@@ -145,19 +152,27 @@ export function activate(context: ExtensionContext) {
         console.log("ModelConfigData:", modelConfigData);
         console.log("ProviderType:", selectedModelAPI);
 
+        // Check if the API key is stored in the secret storage if not prompt the user to enter it
+        if (
+          (await getApiKey(context, modelConfigData.provider)) === undefined
+        ) {
+          await promptAndStoreApiKey(context, modelConfigData.provider);
+          selectedApiKey = await getApiKey(context, modelConfigData.provider);
+        } else {
+          selectedApiKey = await getApiKey(context, modelConfigData.provider);
+        }
+
         switch (selectedModelAPI) {
           case "OpenAICode":
           case "OpenAIHelp":
-            apiProvider = new OpenAICode(process.env.OPENAI_API_KEY || "");
+            apiProvider = new OpenAICode((await selectedApiKey) || "");
             break;
           case "AnthropicCode":
           case "AnthropicHelp":
-            apiProvider = new AnthropicCode(
-              process.env.ANTHROPIC_API_KEY || ""
-            );
+            apiProvider = new AnthropicCode((await selectedApiKey) || "");
             break;
           default:
-            window.showErrorMessage("Invalid AI provider selected.");
+            vscode.window.showErrorMessage("Invalid AI provider selected.");
             return;
         }
 
@@ -171,7 +186,9 @@ export function activate(context: ExtensionContext) {
 
           console.log("Response inserted from API.");
         } catch (error) {
-          window.showErrorMessage("Failed to get a response from the API.");
+          vscode.window.showErrorMessage(
+            "Failed to get a response from the API."
+          );
           console.error(error);
         }
       }
@@ -183,4 +200,48 @@ export function activate(context: ExtensionContext) {
 
 export function deactivate() {
   console.log("LLM Plugin Extension Deactivated");
+}
+
+export async function promptAndStoreApiKey(
+  context: vscode.ExtensionContext,
+  apiKeyType: string // The type of the API key, e.g., 'OpenAI', 'GitHub'
+): Promise<void> {
+  // Prompt the user to enter their API key
+  const apiKey = await vscode.window.showInputBox({
+    prompt: `Enter your ${apiKeyType} API key`,
+    placeHolder: `${apiKeyType} API key`,
+    ignoreFocusOut: true,
+    password: true, // Hide the input as the user types for security
+  });
+
+  // If the user entered a key, store it in the secret storage with the type as the key name
+  if (apiKey) {
+    const keyName = `${apiKeyType}ApiKey`;
+    await context.secrets.store(keyName, apiKey);
+    vscode.window.showInformationMessage(
+      `${apiKeyType} API key has been securely stored.`
+    );
+  } else {
+    vscode.window.showWarningMessage(
+      `${apiKeyType} API key was not entered and has not been stored.`
+    );
+  }
+}
+
+export async function getApiKey(
+  context: vscode.ExtensionContext,
+  apiKeyType: string // The type of the API key, e.g., 'OpenAI', 'GitHub'
+): Promise<string | undefined> {
+  const keyName = `${apiKeyType}ApiKey`;
+
+  // Retrieve the API key from the secret storage
+  const apiKey = await context.secrets.get(keyName);
+
+  if (apiKey) {
+    console.log(`${apiKeyType} API key retrieved successfully.`);
+  } else {
+    console.log(`No ${apiKeyType} API key found.`);
+  }
+
+  return apiKey;
 }

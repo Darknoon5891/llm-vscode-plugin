@@ -12,11 +12,13 @@ Write comments explaining what you want or your current situation and the LLM wi
 
 This extension provides the following commands:
 
-- extension.selectOpenAICode: Selects OpenAI as the AI provider. This command can be triggered via the Ctrl+Alt+O (Windows/Linux) or Cmd+Alt+O (macOS) shortcut.
-- extension.selectAnthropicCode: Selects Anthropic as the AI provider. This command can be triggered via the Ctrl+Alt+N (Windows/Linux) or Cmd+Alt+N (macOS) shortcut.
-- extension.selectAnthropicHelp
-- extension.selectOpenAIHelp
-- extension.sendToAPI: Sends the code in the active editor to the currently selected AI provider. This command can be triggered via the Ctrl+Alt+X (Windows/Linux) or Cmd+E (macOS) shortcut
+- extension.selectOpenAICode: Selects OpenAI as the AI provider for code generation.
+- extension.selectAnthropicCode: Selects Anthropic as the AI provider for code generation.
+- extension.selectAnthropicHelp: Selects OpenAI as the AI provider for help notes.
+- extension.selectOpenAIHelp: Selects Anthropic as the AI provider for help and notes.
+- extension.sendToAPI: Sends the code in the active editor to the currently selected AI provider.
+
+See package.json for keyboard shortcuts and you can just change them as you wish.
 
 # Dev Notes
 

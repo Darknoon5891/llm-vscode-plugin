@@ -1,9 +1,9 @@
 {
   "name": "llm-vscode-plugin",
   "displayName": "llm-vscode-plugin",
-  "description": "LLM Extention for VSCode",
+  "description": "LLM Extension for VSCode",
   "publisher": "regicide",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.92.0"
   },
