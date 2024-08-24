@@ -81,8 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
     () => {
       selectedModelAPI = "AnthropicCode";
       vscode.window.setStatusBarMessage(
-        "(Code) Anthropic selected as AI provider",
-        3000
+        "(Code) Anthropic selected as AI provider"
       );
       console.log("Anthropic selected as AI provider");
     }
