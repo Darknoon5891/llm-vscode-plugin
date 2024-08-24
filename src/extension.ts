@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { GetProcessedWorkspaceCode } from "./codeParsing";
 import { ApiProvider, OpenAICode, AnthropicCode } from "./apiProviders";
 import { RequestData, Message } from "./types";
 
@@ -6,7 +7,7 @@ const modelConfig: { [key: string]: any } = {
   OpenAICode: {
     provider: "OpenAI",
     model: "gpt-4o",
-    max_tokens: 1000,
+    max_tokens: 2000,
     system_prompt:
       "You should replace the code that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```. Any comment that is asking you for something should be removed after you satisfy them. Other comments should left alone. Do not output backticks",
     helpful_prompt:
@@ -15,16 +16,16 @@ const modelConfig: { [key: string]: any } = {
   OpenAIHelp: {
     provider: "OpenAI",
     model: "gpt-4o",
-    max_tokens: 1000,
+    max_tokens: 2000,
     system_prompt:
       "You should replace the code that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```. Any comment that is asking you for something should be removed after you satisfy them. Other comments should left alone. Do not output backticks",
     helpful_prompt:
-      "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. You must prefix each line with the comment marker for the language which is currently",
+      "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code. You must prefix each line with the comment marker for the language which is currently",
   },
   AnthropicCode: {
     provider: "Anthropic",
     model: "claude-3-5-sonnet-20240620",
-    max_tokens: 1000,
+    max_tokens: 2000,
     system_prompt:
       "You should replace the code that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```. Any comment that is asking you for something should be removed after you satisfy them. Other comments should left alone. Do not output backticks",
     helpful_prompt:
@@ -33,11 +34,11 @@ const modelConfig: { [key: string]: any } = {
   AnthropicHelp: {
     provider: "Anthropic",
     model: "claude-3-5-sonnet-20240620",
-    max_tokens: 1000,
+    max_tokens: 2000,
     system_prompt:
       "You should replace the code that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```. Any comment that is asking you for something should be removed after you satisfy them. Other comments should left alone. Do not output backticks",
     helpful_prompt:
-      "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. You must prefix each line with the comment marker for the language which is currently",
+      "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code. You must prefix each line with the comment marker for the language which is currently",
   },
 };
 
@@ -109,11 +110,20 @@ export function activate(context: vscode.ExtensionContext) {
       let focusedFileType = getFocusedFileType();
 
       if (editor) {
-        const document = editor.document;
-        const fileContent = document.getText();
-        const workspaceFolder =
-          vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        // const document = editor.document;
+        // const fileContent = document.getText();
+        // const workspaceFolder =
+        // vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
         let selectedApiKey: string | undefined;
+        let processedCode: string | undefined = GetProcessedWorkspaceCode();
+
+        if (!processedCode) {
+          vscode.window.showErrorMessage(
+            "Failed to process the workspace code."
+          );
+          return;
+        }
 
         // Get the configuration for the selected model
         const modelConfigData = modelConfig[selectedModelAPI];
@@ -134,12 +144,12 @@ export function activate(context: vscode.ExtensionContext) {
                 modelConfigData.helpful_prompt
               } ${focusedFileType} ${"."}`,
             },
-            { role: "user", content: fileContent },
+            { role: "user", content: processedCode },
           ];
         } else {
           modelConfigData.messages = [
             { role: "system", content: modelConfigData.system_prompt },
-            { role: "user", content: fileContent },
+            { role: "user", content: processedCode },
           ];
         }
         // Create the requestData object based on the selected model's configuration
@@ -153,7 +163,7 @@ export function activate(context: vscode.ExtensionContext) {
         let apiProvider: ApiProvider;
 
         console.log("Debugging Info:");
-        console.log("FileContent:", fileContent);
+        console.log("FileContent:", processedCode);
         console.log("RequestData:", requestData);
         console.log("ModelConfigData:", modelConfigData);
         console.log("ProviderType:", selectedModelAPI);
