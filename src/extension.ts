@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { GetProcessedWorkspaceCode } from "./codeParsing";
+import { moveCommentsToBottom } from "./codeParsing";
 import { ApiProvider, OpenAICode, AnthropicCode } from "./apiProviders";
 import { RequestData, Message } from "./types";
 
@@ -9,7 +9,7 @@ const modelConfig: { [key: string]: any } = {
     model: "gpt-4o",
     max_tokens: 2000,
     system_prompt:
-      "Follow the instruction in the comments that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
+      "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
     helpful_prompt:
       "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. You must prefix each line with the comment marker for the language which is currently",
   },
@@ -18,7 +18,7 @@ const modelConfig: { [key: string]: any } = {
     model: "gpt-4o",
     max_tokens: 2000,
     system_prompt:
-      "Follow the instruction in the comments that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
+      "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
     helpful_prompt:
       "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code. You must prefix each line with the comment marker for the language which is currently",
   },
@@ -27,7 +27,7 @@ const modelConfig: { [key: string]: any } = {
     model: "claude-3-5-sonnet-20240620",
     max_tokens: 2000,
     system_prompt:
-      "Follow the instruction in the comments that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
+      "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
     helpful_prompt:
       "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. You must prefix each line with the comment marker for the language which is currently",
   },
@@ -36,7 +36,7 @@ const modelConfig: { [key: string]: any } = {
     model: "claude-3-5-sonnet-20240620",
     max_tokens: 2000,
     system_prompt:
-      "Follow the instruction in the comments that you are sent, only following the comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
+      "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
     helpful_prompt:
       "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code. You must prefix each line with the comment marker for the language which is currently",
   },
@@ -46,6 +46,13 @@ const modelConfig: { [key: string]: any } = {
 // add config above and function in apiProviders.ts to add a new llm provider.
 // add shortcut key and register command if required.
 // add .env api key if required.
+
+// Instructions to add a new language support:
+// add the language to commentMapping in codeParsing.ts
+
+// ISSUES:
+// comment detection system just not very good
+// API streaming required
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("LLM Plugin Extension Activated");
@@ -116,7 +123,7 @@ export function activate(context: vscode.ExtensionContext) {
         // vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
         let selectedApiKey: string | undefined;
-        let processedCode: string | undefined = GetProcessedWorkspaceCode();
+        let processedCode: string | undefined = moveCommentsToBottom(editor);
 
         if (!processedCode) {
           vscode.window.showErrorMessage(
@@ -130,7 +137,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (!modelConfigData) {
           vscode.window.showErrorMessage(
-            `Configuration not found for model: ${selectedModelAPI}`
+            `No model has been selected. Please select a model.`
           );
           return;
         }
@@ -232,6 +239,7 @@ export async function promptAndStoreApiKey(
   });
 
   // If the user entered a key, store it in the secret storage with the type as the key name
+  // Stores the API key in OS manged secure storage
   if (apiKey) {
     const keyName = `${apiKeyType}ApiKey`;
     await context.secrets.store(keyName, apiKey);

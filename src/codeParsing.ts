@@ -1,120 +1,309 @@
 import * as ts from "typescript";
 import * as vscode from "vscode";
+import { CommentBoundaries, LineRemovalInfo } from "./types";
 
-// Main function to process code with AI
-export function GetProcessedWorkspaceCode() {
-  const editor = vscode.window.activeTextEditor;
+const commentMapping: {
+  [key: string]: { singleline: string | null; multiline: string[] | null };
+} = {
+  python: {
+    singleline: "#",
+    multiline: ["'''", '"""'],
+  },
+  javascript: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  typescript: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  java: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  c: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  cpp: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  csharp: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  ruby: {
+    singleline: "#",
+    multiline: ["=begin", "=end"],
+  },
+  php: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  html: {
+    singleline: null, // HTML does not have a single-line comment
+    multiline: ["<!--", "-->"],
+  },
+  css: {
+    singleline: null, // CSS does not have a single-line comment
+    multiline: ["/*", "*/"],
+  },
+  bash: {
+    singleline: "#",
+    multiline: null, // Bash does not have a multiline comment syntax
+  },
+  r: {
+    singleline: "#",
+    multiline: null, // R does not have a multiline comment syntax
+  },
+  swift: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  go: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+  kotlin: {
+    singleline: "//",
+    multiline: ["/*", "*/"],
+  },
+};
+
+export function moveCommentsToBottom(
+  editor: vscode.TextEditor
+): string | undefined {
   if (!editor) {
     vscode.window.showErrorMessage("No active editor found.");
     return;
   }
 
   const document = editor.document;
+  const documentText = document.getText();
   const cursorPosition = editor.selection.active;
-  const contextRange = calculateContextRange(cursorPosition);
+  const languageId = editor.document.languageId;
+  const stringPadding = "\r\n".repeat(3);
 
-  // Parse the code and find dependencies
-  const sourceFile = parseCodeToAST(document);
-  const dependencies = findDependenciesInContext(sourceFile, contextRange);
+  const editorCommentMappings = getEditorLanguageComments(editor, languageId);
 
-  // Construct and optimize the snippet
-  let processedCode = constructCodeSnippet(
-    document,
-    dependencies,
-    contextRange
+  // we remove whitespace no only for the comment detection but also to optimise the API call
+  const cleanedCodeInfo = removeWhitespaceLines(
+    documentText,
+    cursorPosition.line
   );
-  // Optimise the code from the workspace
-  processedCode = optimizeSnippet(processedCode);
 
-  // Return the processed code
-  return processedCode;
-}
+  let cleanedCode = cleanedCodeInfo.cleanedCode;
+  const newCursorPosition =
+    cursorPosition.line - cleanedCodeInfo.linesRemovedBefore;
 
-// Calculate the context range based on cursor position
-function calculateContextRange(cursorPosition: vscode.Position): vscode.Range {
-  const startLine = Math.max(cursorPosition.line - 5, 0);
-  const endLine = cursorPosition.line + 5;
-  return new vscode.Range(startLine, 0, endLine, 1000);
-}
-
-// Parse the document's code into an Abstract Syntax Tree (AST)
-function parseCodeToAST(document: vscode.TextDocument): ts.SourceFile {
-  const sourceCode = document.getText();
-  const sourceFile = ts.createSourceFile(
-    document.fileName,
-    sourceCode,
-    ts.ScriptTarget.Latest,
-    true
+  const commentRange = detectCommentBoundaries(
+    cleanedCode,
+    newCursorPosition,
+    editorCommentMappings.singleline,
+    editorCommentMappings.multiline,
+    languageId
   );
-  return sourceFile;
+
+  if (!commentRange) {
+    // if we don't find a comment, just return all the code
+    return document.getText();
+  }
+
+  // Extract the comment text from the code
+  let commentText = cleanedCode.slice(commentRange.start, commentRange.end);
+
+  // Remove the extracted comment from the code
+  cleanedCode = removeStringRange(
+    cleanedCode,
+    commentRange.start,
+    commentRange.end
+  );
+
+  commentText = commentText
+    .split("\n")
+    .map((line) => line.trimStart())
+    .join("\n");
+
+  // Append the comment to the end of the code
+  cleanedCode += stringPadding + commentText;
+
+  console.log("Cleaned code:", cleanedCode);
+  return cleanedCode;
 }
 
-// Find all dependencies within the context range
-function findDependenciesInContext(
-  sourceFile: ts.SourceFile,
-  contextRange: vscode.Range
-): Set<string> {
-  const dependencies = new Set<string>();
+function detectCommentBoundaries(
+  code: string,
+  currentLine: number,
+  singleLineIdentifier: string | null,
+  blockCommentIdentifier: string[] | null,
+  languageId: string
+): CommentBoundaries | null {
+  const lines = code.split("\n");
+  let characterCount = 0;
 
-  const visitor = (node: ts.Node) => {
-    const start = node.getStart(sourceFile);
-    const end = node.getEnd();
-    const startPos = sourceFile.getLineAndCharacterOfPosition(start);
-    const endPos = sourceFile.getLineAndCharacterOfPosition(end);
-    const nodeRange = new vscode.Range(
-      startPos.line,
-      startPos.character,
-      endPos.line,
-      endPos.character
-    );
+  // // Find the current line based on the position
+  // for (let i = 0; i < lines.length; i++) {
+  //   characterCount += lines[i].length + 1; // +1 for the newline character
+  //   if (characterCount > position) {
+  //     currentLine = i;
+  //     break;
+  //   }
+  // }
 
-    if (contextRange.intersection(nodeRange)) {
-      if (ts.isIdentifier(node)) {
-        dependencies.add(node.getText(sourceFile));
+  // Step 1: Determine if inside a single-line comment block
+  // We have added -1 here as a dirty fix as when the whitespace is remove the current line is also included in the whitespace so while this works
+  // if the cursor is on the first line of the comment block, it will not work if the cursor is on the last line of the comment block
+  let startLine = currentLine - 1;
+  let endLine = currentLine;
+
+  if (singleLineIdentifier) {
+    // Move upwards to find the start of the comment block
+    while (startLine > 0) {
+      if (lines[startLine].trimStart().startsWith(singleLineIdentifier)) {
+        startLine--;
+      } else {
+        startLine++;
+        break;
       }
     }
 
-    ts.forEachChild(node, visitor);
-  };
+    // Move downwards to find the end of the comment block
+    while (endLine < lines.length - 1) {
+      if (lines[endLine + 1].trimStart().startsWith(singleLineIdentifier)) {
+        endLine++;
+      } else {
+        break;
+      }
+    }
 
-  ts.forEachChild(sourceFile, visitor);
+    // Detect if EOF is reached
+    if (endLine === lines.length - 1) {
+      // If the loop reaches the last line of the file, assume the cursor was already at the bottom of the comment
+      // Use the current endLine as the end of the comment block
+      endLine = lines.length - 1;
+    }
 
-  return dependencies;
+    // If the start and end lines are different or the current line is a single-line comment, return the comment boundaries
+    if (
+      startLine !== endLine ||
+      lines[currentLine].trimStart().startsWith(singleLineIdentifier)
+    ) {
+      const start =
+        lines.slice(0, startLine).join("\n").length + (startLine > 0 ? 1 : 0);
+      const end = lines.slice(0, endLine + 1).join("\n").length;
+      return { start, end, type: "single-line" };
+    }
+  }
+
+  // Special case for python comments
+  if (blockCommentIdentifier && languageId === "python") {
+    // If the language is python we need to process the block comments differently as the start and end identifiers could be different
+    for (const identifier of blockCommentIdentifier) {
+      const before = code.slice(0, currentLine);
+      const after = code.slice(currentLine);
+
+      const blockStart = before.lastIndexOf(identifier);
+      const blockEnd = after.indexOf(identifier);
+
+      // If a block comment is found and the cursor is inside the block comment, return the comment boundaries
+      if (blockStart !== -1 && blockEnd !== -1 && blockStart < currentLine) {
+        const start = blockStart;
+        const end = currentLine + blockEnd + identifier.length;
+        console.log("Block comment found:", start, end);
+        return { start, end, type: "block" };
+      }
+    }
+  } else if (blockCommentIdentifier) {
+    // If the language is not python we can process the block comments making the assumption that the start and end identifiers are the same
+    let blockCommentIdentifierTEMP: string;
+    let blockCommentIdentifierStart = blockCommentIdentifier[0];
+    let blockCommentIdentifierEnd = blockCommentIdentifier[1];
+    // Step 2: Check for block comments
+    const before = code.slice(0, currentLine);
+    const after = code.slice(currentLine);
+
+    const blockStart = before.lastIndexOf(blockCommentIdentifierStart);
+    const blockEnd = after.indexOf(blockCommentIdentifierEnd);
+
+    // If a block comment is found and the cursor is inside the block comment, return the comment boundaries
+    if (blockStart !== -1 && blockEnd !== -1 && blockStart < currentLine) {
+      const start = blockStart;
+      const end = currentLine + blockEnd + blockCommentIdentifierEnd.length;
+      console.log("Block comment found:", start, end);
+      return { start, end, type: "block" };
+    }
+  }
+
+  // No comment found
+  console.log("No comment found");
+  return null;
 }
 
-// Construct the code snippet to send to the AI
-function constructCodeSnippet(
-  document: vscode.TextDocument,
-  dependencies: Set<string>,
-  contextRange: vscode.Range
-): string {
-  const sourceLines = document.getText().split("\n");
-  const snippetLines: string[] = [];
+// Helper function to remove whitespace lines from the code
+function removeWhitespaceLines(
+  code: string,
+  targetLine: number
+): LineRemovalInfo {
+  // Step 1: Split the code into lines
+  const lines = code.split("\n");
 
-  for (let i = 0; i < sourceLines.length; i++) {
-    const lineText = sourceLines[i];
+  let linesRemovedBefore = 0;
+  let linesRemovedAfter = 0;
 
-    // Always include lines within the context range
-    if (contextRange.contains(new vscode.Position(i, 0))) {
-      snippetLines.push(lineText);
+  // Step 2: Initialize a new array to hold non-whitespace lines
+  const nonWhitespaceLines: string[] = [];
+
+  // Step 3: Iterate through the lines and filter out empty lines
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim() !== "") {
+      nonWhitespaceLines.push(line);
     } else {
-      // Include lines that define one of the dependencies
-      for (const dep of dependencies) {
-        if (lineText.includes(dep)) {
-          snippetLines.push(lineText);
-          break;
-        }
+      if (i < targetLine) {
+        linesRemovedBefore++;
+      } else if (i > targetLine) {
+        linesRemovedAfter++;
       }
     }
   }
 
-  return snippetLines.join("\n");
+  // Step 4: Reconstruct the code string from the filtered lines
+  const cleanedCode = nonWhitespaceLines.join("\n");
+
+  // Return the cleaned code along with the number of lines removed before and after the target line
+  return {
+    cleanedCode,
+    linesRemovedBefore,
+    linesRemovedAfter,
+  };
 }
 
-// Optimize the constructed snippet by removing redundant lines
-function optimizeSnippet(snippet: string): string {
-  return snippet
-    .split("\n")
-    .filter((line) => line.trim() !== "" && !line.trim().startsWith("//"))
-    .join("\n");
+function getEditorLanguageComments(
+  editor: vscode.TextEditor,
+  languageId: string
+): {
+  singleline: string | null;
+  multiline: string[] | null;
+} {
+  // Look up the comment syntax for the current language
+  const commentSyntax = commentMapping[languageId];
+
+  if (commentSyntax) {
+    return commentSyntax;
+  } else {
+    console.log(`No comment syntax mapping found for language: ${languageId}`);
+    return { singleline: "//", multiline: ["/*", "*/"] };
+  }
+}
+
+function removeStringRange(input: string, start: number, end: number): string {
+  if (start < 0 || end > input.length || start > end) {
+    throw new Error("Invalid start or end indices.");
+  }
+
+  const before = input.slice(0, start);
+  const after = input.slice(end);
+
+  return before + after;
 }
