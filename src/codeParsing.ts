@@ -8,7 +8,7 @@ const commentMapping: {
 } = {
   python: {
     singleline: "#",
-    multiline: ["'''", '"""'],
+    multiline: ['"""', '"""'],
   },
   javascript: {
     singleline: "//",
@@ -149,6 +149,8 @@ export function moveCommentsToBottom(
 
     let endFileLine = lines.length - 1;
 
+    let commentSizeLimit = 50;
+
     let resultsCommentBoundaries: CommentBoundaries | null = null;
 
     // we should first check just for a single line comment at the cursor position and mark that as the current comment if found
@@ -160,12 +162,17 @@ export function moveCommentsToBottom(
     detectSingleMultiLineComment();
 
     //we should then check for multi block comments which are defined by the multi block comment identifier
-    if (languageId !== "python") {
-      detectMultiLineComment();
-    }
+    detectMultiLineComment();
+    // if (languageId !== "python") {
+    //   detectMultiLineComment();
+    // }
 
     if (languageId === "python") {
       // REMEMBER TO ADD PYTHON HANDLER as it has can have multiple block comment identifiers
+      console.warn("Python handler not implemented");
+      console.warn(
+        "currently block python comments denoted by ''' are not support and will lead to unexpected behaviour"
+      );
     }
 
     // we can then return the comment if found based its order in this list or return null if no comment is found
@@ -304,6 +311,53 @@ export function moveCommentsToBottom(
     }
 
     function detectMultiLineComment(): CommentBoundaries | null {
+      // Validate input: Check if the blockCommentIdentifier is provided and if currentLine is within the valid range.
+      if (
+        !blockCommentIdentifier ||
+        currentLine < 0 ||
+        currentLine >= lines.length
+      ) {
+        return null; // Return null if the input is invalid.
+      }
+
+      let startLine = currentLine;
+      let endLine = currentLine;
+      let foundStartIdentifier = false;
+      let foundEndIdentifier = false;
+
+      // Move upwards to find the start of the comment block
+      while (startLine >= 0 && currentLine - startLine <= commentSizeLimit) {
+        if (
+          lines[startLine].trimStart().startsWith(blockCommentIdentifier[0])
+        ) {
+          foundStartIdentifier = true;
+          break; // Found the start of the block comment
+        }
+        startLine--;
+      }
+
+      // Move downwards to find the end of the comment block
+      while (
+        endLine < lines.length &&
+        endLine - currentLine <= commentSizeLimit
+      ) {
+        if (lines[endLine].trimEnd().endsWith(blockCommentIdentifier[1])) {
+          foundEndIdentifier = true;
+          break; // Found the end of the block comment
+        }
+        endLine++;
+      }
+
+      // If both the start and end identifiers are found within the commentSizeLimit
+      if (foundStartIdentifier && foundEndIdentifier) {
+        resultsCommentBoundaries = {
+          start: startLine,
+          end: endLine,
+          type: "block",
+        };
+      }
+
+      // If no valid comment block is found within the size limit, return null.
       return null;
     }
 
