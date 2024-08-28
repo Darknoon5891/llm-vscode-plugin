@@ -57,6 +57,8 @@ const modelConfig: { [key: string]: any } = {
 export function activate(context: vscode.ExtensionContext) {
   console.log("LLM Plugin Extension Activated");
 
+  const DEBUG = true;
+
   // Define the API provider to use
   let selectedModelAPI = "NONE";
 
