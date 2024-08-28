@@ -3,6 +3,9 @@ import { moveCommentsToBottom } from "./codeParsing";
 import { ApiProvider, OpenAICode, AnthropicCode } from "./apiProviders";
 import { RequestData, Message } from "./types";
 
+// Global variable to enable debugging and console logging
+globalThis.DEBUG = true;
+
 const modelConfig: { [key: string]: any } = {
   OpenAICode: {
     provider: "OpenAI",
@@ -50,14 +53,12 @@ const modelConfig: { [key: string]: any } = {
 // Instructions to add a new language support:
 // add the language to commentMapping in codeParsing.ts
 
-// ISSUES:
-// comment detection system just not very good
 // API streaming required
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log("LLM Plugin Extension Activated");
-
-  const DEBUG = true;
+  if (DEBUG === true) {
+    console.log("LLM Plugin Extension Activated");
+  }
 
   // Define the API provider to use
   let selectedModelAPI = "NONE";
@@ -70,7 +71,9 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.setStatusBarMessage(
         "(Code) OpenAI selected as AI provider"
       );
-      console.log("OpenAI selected as AI provider");
+      if (DEBUG === true) {
+        console.log("OpenAI selected as AI provider");
+      }
     }
   );
   // Register command to select OpenAI as the provider Help
@@ -81,7 +84,9 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.setStatusBarMessage(
         "(Help) OpenAI selected as AI provider"
       );
-      console.log("OpenAI selected as AI provider");
+      if (DEBUG === true) {
+        console.log("OpenAI selected as AI provider");
+      }
     }
   );
 
@@ -93,7 +98,9 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.setStatusBarMessage(
         "(Code) Anthropic selected as AI provider"
       );
-      console.log("Anthropic selected as AI provider");
+      if (DEBUG === true) {
+        console.log("Anthropic selected as AI provider");
+      }
     }
   );
 
@@ -105,7 +112,9 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.setStatusBarMessage(
         "(Help) Anthropic selected as AI provider"
       );
-      console.log("Anthropic selected as AI provider");
+      if (DEBUG === true) {
+        console.log("Anthropic selected as AI provider");
+      }
     }
   );
 
@@ -113,7 +122,9 @@ export function activate(context: vscode.ExtensionContext) {
     "extension.sendToAPI",
 
     async () => {
-      console.log("Making API Request to AI provider");
+      if (DEBUG === true) {
+        console.log("Making API Request to AI provider");
+      }
       const editor = vscode.window.activeTextEditor;
 
       let focusedFileType = getFocusedFileType();
@@ -171,12 +182,24 @@ export function activate(context: vscode.ExtensionContext) {
         // Choose the AI provider (for example, based on a configuration)
         let apiProvider: ApiProvider;
 
-        console.log("Debugging Info:");
-        console.log("FileContent:", processedCode);
-        console.log("RequestData:", requestData);
-        console.log("ModelConfigData:", modelConfigData);
-        console.log("ProviderType:", selectedModelAPI);
-        console.log("FocusedFileType:", focusedFileType);
+        if (DEBUG === true) {
+          console.log("Debugging Info:");
+        }
+        if (DEBUG === true) {
+          console.log("FileContent:", processedCode);
+        }
+        if (DEBUG === true) {
+          console.log("RequestData:", requestData);
+        }
+        if (DEBUG === true) {
+          console.log("ModelConfigData:", modelConfigData);
+        }
+        if (DEBUG === true) {
+          console.log("ProviderType:", selectedModelAPI);
+        }
+        if (DEBUG === true) {
+          console.log("FocusedFileType:", focusedFileType);
+        }
 
         // Check if the API key is stored in the secret storage if not prompt the user to enter it
         if (
@@ -210,7 +233,9 @@ export function activate(context: vscode.ExtensionContext) {
             editBuilder.insert(editor.selection.active, `\n${apiResponse}`);
           });
 
-          console.log("Response inserted from API.");
+          if (DEBUG === true) {
+            console.log("Response inserted from API.");
+          }
         } catch (error) {
           vscode.window.showErrorMessage(
             "Failed to get a response from the API."
@@ -225,7 +250,9 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  console.log("LLM Plugin Extension Deactivated");
+  if (DEBUG === true) {
+    console.log("LLM Plugin Extension Deactivated");
+  }
 }
 
 export async function promptAndStoreApiKey(
@@ -265,9 +292,13 @@ export async function getApiKey(
   const apiKey = await context.secrets.get(keyName);
 
   if (apiKey) {
-    console.log(`${apiKeyType} API key retrieved successfully.`);
+    if (DEBUG === true) {
+      console.log(`${apiKeyType} API key retrieved successfully.`);
+    }
   } else {
-    console.log(`No ${apiKeyType} API key found.`);
+    if (DEBUG === true) {
+      console.log(`No ${apiKeyType} API key found.`);
+    }
   }
 
   return apiKey;

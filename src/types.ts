@@ -1,3 +1,11 @@
+declare global {
+  interface Global {
+    DEBUG: boolean;
+  }
+
+  var DEBUG: Global["DEBUG"];
+}
+
 export interface Message {
   role: string; // e.g., "user", "system", "assistant"
   content: string; // The actual content of the message

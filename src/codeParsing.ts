@@ -129,7 +129,9 @@ export function moveCommentsToBottom(
   // Append the comment to the end of the code
   cleanedCode += stringPadding + commentText;
 
-  console.log("Cleaned code:", cleanedCode);
+  if (DEBUG === true) {
+    console.log("Cleaned code:", cleanedCode);
+  }
   return cleanedCode;
 
   function detectCommentBoundaries(
@@ -169,11 +171,18 @@ export function moveCommentsToBottom(
     // we can then return the comment if found based its order in this list or return null if no comment is found
     if (resultsCommentBoundaries) {
       // Single-line comment found
-      console.log("resultsCommentBoundaries found:", resultsCommentBoundaries);
+      if (DEBUG === true) {
+        console.log(
+          "resultsCommentBoundaries found:",
+          resultsCommentBoundaries
+        );
+      }
       return resultsCommentBoundaries;
     }
     // No comment found
-    console.log("No comment found");
+    if (DEBUG === true) {
+      console.log("No comment found");
+    }
     return null;
 
     // This function will detect single line comments 2+/2- lines above and below the cursor
@@ -312,14 +321,14 @@ export function moveCommentsToBottom(
     //     if (blockStart !== -1 && blockEnd !== -1 && blockStart < currentLine) {
     //       const start = blockStart;
     //       const end = currentLine + blockEnd + identifier.length;
-    //       console.log("Block comment found:", start, end);
+    //       if (DEBUG === true) { console.log("Block comment found:", start, end); }
     //       resultsCommentBoundaries = {
     //         start,
     //         end,
     //         type: "block",
     //       } as CommentBoundaries;
     //     } else {
-    //       console.log("Block comment not found");
+    //       if (DEBUG === true) { console.log("Block comment not found"); }
     //     }
     //   }
     // } else if (blockCommentIdentifier) {
@@ -338,14 +347,14 @@ export function moveCommentsToBottom(
     //   if (blockStart !== -1 && blockEnd !== -1 && blockStart < currentLine) {
     //     const start = blockStart;
     //     const end = currentLine + blockEnd + blockCommentIdentifierEnd.length;
-    //     console.log("Block comment found:", start, end);
+    //     if (DEBUG === true) { console.log("Block comment found:", start, end); }
     //     resultsCommentBoundaries = {
     //       start,
     //       end,
     //       type: "block",
     //     } as CommentBoundaries;
     //   } else {
-    //     console.log("Block comment not found");
+    //     if (DEBUG === true) { console.log("Block comment not found"); }
     //   }
     // }
   }
