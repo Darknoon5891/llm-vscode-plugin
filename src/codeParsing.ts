@@ -350,6 +350,11 @@ export function moveCommentsToBottom(
 
       // If both the start and end identifiers are found within the commentSizeLimit
       if (foundStartIdentifier && foundEndIdentifier) {
+        // Calculate the start and end positions (character indices) of the comment block.
+        startLine =
+          lines.slice(0, startLine).join("\n").length + (startLine > 0 ? 1 : 0);
+        endLine = lines.slice(0, endLine + 1).join("\n").length;
+
         resultsCommentBoundaries = {
           start: startLine,
           end: endLine,
