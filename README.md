@@ -1,6 +1,8 @@
 # llm-vscode-plugin README
 
-Simple Multi-LLM Workspace Integration into VSCode
+Simple Multi-LLM Workspace Integration into VSCode via.
+<br>
+What's Cursor?
 
 ## Features
 

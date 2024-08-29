@@ -95,8 +95,11 @@ export function moveCommentsToBottom(
   );
 
   let cleanedCode = cleanedCodeInfo.cleanedCode;
-  const newCursorPosition =
+  let newCursorPosition =
     cursorPosition.line - cleanedCodeInfo.linesRemovedBefore;
+
+  // if the cursor is at the end  of the file and its empty we need to move it up one line as the line will have been removed by the whitespace removal
+  EOFfix();
 
   const commentRange = detectCommentBoundaries(
     cleanedCode,
@@ -192,10 +195,9 @@ export function moveCommentsToBottom(
     }
     return null;
 
-    // This function will detect single line comments 2+/2- lines above and below the cursor
+    // This function will detect single line comments on the current line
     function detectSingleLineComment(): CommentBoundaries | null {
       if (singleLineIdentifier) {
-        // Check 1 lines below the cursor
         if (startLine === endLine) {
           if (lines[startLine].trimStart().startsWith(singleLineIdentifier)) {
             // This function should only return one line
@@ -490,5 +492,18 @@ export function moveCommentsToBottom(
     const after = input.slice(end);
 
     return before + after;
+  }
+
+  function EOFfix() {
+    let cleanedCodeSplit = cleanedCode.split("\n");
+    let cleanedCodeSplitLength = cleanedCodeSplit.length;
+    if (cleanedCodeSplitLength === newCursorPosition) {
+      // we check for undefined as its already been removed
+      if (cleanedCodeSplit[cleanedCodeSplitLength] === undefined) {
+        // This means the cursor is at the end of the file and the line is empty
+        // we should move the cursor up one line as the line won't exist anymore
+        newCursorPosition = newCursorPosition - 1;
+      }
+    }
   }
 }
