@@ -53,7 +53,9 @@ const modelConfig: { [key: string]: any } = {
 // Instructions to add a new language support:
 // add the language to commentMapping in codeParsing.ts
 
+// TODO:
 // API streaming required
+// Improve the code comment parsing to handle more edge cases
 
 export function activate(context: vscode.ExtensionContext) {
   if (DEBUG === true) {
