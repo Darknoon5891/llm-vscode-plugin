@@ -10,7 +10,7 @@ const modelConfig: { [key: string]: any } = {
   OpenAICode: {
     provider: "OpenAI",
     model: "gpt-4o",
-    max_tokens: 2000,
+    max_tokens: 4000,
     system_prompt:
       "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
     helpful_prompt:
@@ -19,7 +19,7 @@ const modelConfig: { [key: string]: any } = {
   OpenAIHelp: {
     provider: "OpenAI",
     model: "gpt-4o",
-    max_tokens: 2000,
+    max_tokens: 4000,
     system_prompt:
       "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
     helpful_prompt:
@@ -28,7 +28,7 @@ const modelConfig: { [key: string]: any } = {
   AnthropicCode: {
     provider: "Anthropic",
     model: "claude-3-5-sonnet-20240620",
-    max_tokens: 2000,
+    max_tokens: 4000,
     system_prompt:
       "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
     helpful_prompt:
@@ -37,7 +37,7 @@ const modelConfig: { [key: string]: any } = {
   AnthropicHelp: {
     provider: "Anthropic",
     model: "claude-3-5-sonnet-20240620",
-    max_tokens: 2000,
+    max_tokens: 4000,
     system_prompt:
       "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
     helpful_prompt:
