@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   // Access the configuration
-  const config = vscode.workspace.getConfiguration("agiIntegration");
+  const config = vscode.workspace.getConfiguration("AGIModelType");
 
   // Read specific properties
   const openAiModel = config.get<string>("openaimodel");
