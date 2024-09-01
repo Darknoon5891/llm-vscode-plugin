@@ -135,7 +135,7 @@ export function moveCommentsToBottom(
   // Tell LLM the line we are on
   cleanedCode +=
     stringPadding +
-    `Follow the instructions found on line: ${(newCursorPosition += 1).toString()}`;
+    `Follow the instructions found on line: ${(newCursorPosition += 1).toString()}.`;
 
   if (DEBUG === true) {
     console.log("Cleaned code:", cleanedCode);
