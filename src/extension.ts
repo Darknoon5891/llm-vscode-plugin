@@ -9,14 +9,14 @@ globalThis.DEBUG = true;
 // Instructions to add a new AI provider:
 // add config above and function in apiProviders.ts to add a new llm provider.
 // add shortcut key and register command if required.
-// add .env api key if required.
+// add api key if required.
 
 // Instructions to add a new language support:
 // add the language to commentMapping in codeParsing.ts
 
 // TODO:
 // API streaming required
-// Improve the code comment parsing to handle more edge cases
+// Add Gemini cause its going to be cracked soon surely
 
 export function activate(context: vscode.ExtensionContext) {
   if (DEBUG === true) {
@@ -24,50 +24,47 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   // Access the configuration
-  const config = vscode.workspace.getConfiguration("AGIModelType");
+  const config = vscode.workspace.getConfiguration("modelConfig");
 
-  // Read specific properties
-  const openAiModel = config.get<string>("openaimodel");
-  const anthropicModel = config.get<string>("anthropicmodel");
+  // Read config properties
+  const openAiModelType = config.get<string>("openaimodel");
+  const openAiMaxTokens = config.get<string>("openaimaxtokens");
+  const anthropicModelType = config.get<string>("anthropicmodel");
+  const anthropicMaxTokens = config.get<string>("anthropicmaxtokens");
+  const openAiModelSystemPrompt = config.get<string>("openaicodeprompt");
+  const openAiModelHelpPrompt = config.get<string>("openaihelprompt");
+  const anthropicModelSystemPrompt = config.get<string>("anthropiccodeprompt");
+  const anthropicHelpPrompt = config.get<string>("anthropichelpprompt");
 
   const modelConfig: { [key: string]: any } = {
     OpenAICode: {
       provider: "OpenAI",
-      model: openAiModel,
-      max_tokens: 4000,
-      system_prompt:
-        "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
-      helpful_prompt:
-        "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. You must prefix each line with the comment marker for the language which is currently",
+      model: openAiModelType,
+      max_tokens: openAiMaxTokens,
+      system_prompt: openAiModelSystemPrompt,
     },
     OpenAIHelp: {
       provider: "OpenAI",
-      model: openAiModel,
-      max_tokens: 4000,
-      system_prompt:
-        "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
-      helpful_prompt:
-        "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code. You must prefix each line with the comment marker for the language which is currently",
+      model: openAiModelType,
+      max_tokens: openAiMaxTokens,
+      system_prompt: openAiModelSystemPrompt,
+      helpful_prompt: openAiModelHelpPrompt,
     },
     AnthropicCode: {
       provider: "Anthropic",
-      model: anthropicModel,
-      max_tokens: 4000,
-      system_prompt:
-        "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
-      helpful_prompt:
-        "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. You must prefix each line with the comment marker for the language which is currently",
+      model: anthropicModelType,
+      max_tokens: anthropicMaxTokens,
+      system_prompt: anthropicModelSystemPrompt,
     },
     AnthropicHelp: {
       provider: "Anthropic",
-      model: anthropicModel,
-      max_tokens: 4000,
-      system_prompt:
-        "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
-      helpful_prompt:
-        "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code. You must prefix each line with the comment marker for the language which is currently",
+      model: anthropicModelType,
+      max_tokens: anthropicMaxTokens,
+      helpful_prompt: anthropicHelpPrompt,
     },
   };
+  const helpfulPromptEndComment =
+    "You must prefix each line with the comment marker for the language which is currently";
 
   // Define the API provider to use
   let selectedModelAPI = "NONE";
@@ -85,6 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
   );
+
   // Register command to select OpenAI as the provider Help
   let selectOpenAIHelp = vscode.commands.registerCommand(
     "extension.selectOpenAIHelp",
@@ -171,7 +169,7 @@ export function activate(context: vscode.ExtensionContext) {
               role: "system",
               content: `${
                 modelConfigData.helpful_prompt
-              } ${focusedFileType} ${"."}`,
+              } ${helpfulPromptEndComment} ${focusedFileType}${"."}`,
             },
             { role: "user", content: processedCode },
           ];

@@ -3,7 +3,7 @@
   "displayName": "llm-vscode-plugin",
   "description": "LLM Extension for VSCode",
   "publisher": "Darknoon5891",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -24,15 +24,45 @@
       "type": "object",
       "title": "llm-vscode-plugin",
       "properties": {
-        "AGIModelType.openaimodel": {
+        "modelConfig.openaimodel": {
           "type": "string",
           "default": "gpt-4o",
           "description": "OpenAI Model Version"
         },
-        "AGIModelType.anthropicmodel": {
+        "modelConfig.openaimaxtokens": {
+          "type": "integer",
+          "default": 4000,
+          "description": "Max Tokens for OpenAI"
+        },
+        "modelConfig.openaicodeprompt": {
+          "type": "string",
+          "default": "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
+          "description": "System Prompt for (Code) OpenAI Requests"
+        },
+        "modelConfig.openaihelprompt": {
+          "type": "string",
+          "default": "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.",
+          "description": "System Prompt for (Help) OpenAI Requests"
+        },
+        "modelConfig.anthropiccodeprompt": {
+          "type": "string",
+          "default": "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
+          "description": "System Prompt for (Code) Anthropic Requests"
+        },
+        "modelConfig.anthropichelpprompt": {
+          "type": "string",
+          "default": "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.",
+          "description": "System Prompt for (Help) Anthropic Requests"
+        },
+        "modelConfig.anthropicmodel": {
           "type": "string",
           "default": "claude-3-5-sonnet-20240620",
           "description": "Anthropic Model Version"
+        },
+        "modelConfig.anthropicmaxtokens": {
+          "type": "integer",
+          "default": 4000,
+          "description": "Max Tokens for Anthropic"
         }
       }
     },
