@@ -1,13 +1,13 @@
 # llm-vscode-plugin README
 
-Simple Multi-LLM Workspace Integration into VSCode via.
+Simple Multi-LLM Workspace Integration into VSCode.
 <br>
 What's Cursor?
 
 ## Features
 
 Change LLM Provider and Make API Calls as required.
-The Extension will send the code currently in focus or the entire document if specified.
+The Extension will send the code currently in focus or the entire document if required.
 Write comments explaining what you want or your current situation and the LLM will write code or comments directly into the open document.
 
 ## Commands

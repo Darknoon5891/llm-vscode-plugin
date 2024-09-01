@@ -118,11 +118,11 @@ export function moveCommentsToBottom(
   let commentText = cleanedCode.slice(commentRange.start, commentRange.end);
 
   // Remove the extracted comment from the code
-  cleanedCode = removeStringRange(
-    cleanedCode,
-    commentRange.start,
-    commentRange.end
-  );
+  // cleanedCode = removeStringRange(
+  //   cleanedCode,
+  //   commentRange.start,
+  //   commentRange.end
+  // );
 
   commentText = commentText
     .split("\n")
@@ -130,7 +130,12 @@ export function moveCommentsToBottom(
     .join("\n");
 
   // Append the comment to the end of the code
-  cleanedCode += stringPadding + commentText;
+  //cleanedCode += stringPadding + commentText;
+
+  // Tell LLM the line we are on
+  cleanedCode +=
+    stringPadding +
+    `Follow the instructions found on line: ${(newCursorPosition += 1).toString()}`;
 
   if (DEBUG === true) {
     console.log("Cleaned code:", cleanedCode);
