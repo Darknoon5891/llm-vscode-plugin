@@ -3,7 +3,7 @@
   "displayName": "llm-vscode-plugin",
   "description": "LLM Extension for VSCode",
   "publisher": "Darknoon5891",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -22,17 +22,17 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "AI Provider Configuration",
+      "title": "llm-vscode-plugin",
       "properties": {
-        "agiIntegration.openAiApiKey": {
+        "AGIModelType.openaimodel": {
           "type": "string",
-          "default": "",
-          "description": "API Key for OpenAI"
+          "default": "gpt-4o",
+          "description": "OpenAI Model Version"
         },
-        "agiIntegration.anotherAiApiKey": {
+        "AGIModelType.anthropicmodel": {
           "type": "string",
-          "default": "",
-          "description": "API Key for Another AI Provider"
+          "default": "claude-3-5-sonnet-20240620",
+          "description": "Anthropic Model Version"
         }
       }
     },
