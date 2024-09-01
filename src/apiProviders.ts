@@ -1,9 +1,11 @@
 // src/apiProviders.ts
+import * as vscode from "vscode";
 import axios from "axios";
 import { RequestData, Message } from "./types";
+import { ErrorCallback } from "typescript";
 
 export interface ApiProvider {
-  getResponse(requestData: RequestData): Promise<string>;
+  getResponse(requestData: RequestData): Promise<boolean | undefined>;
 }
 
 export class OpenAICode implements ApiProvider {
@@ -13,23 +15,65 @@ export class OpenAICode implements ApiProvider {
     this.apiKey = apiKey;
   }
 
-  async getResponse(requestData: RequestData): Promise<string> {
+  async getResponse(requestData: RequestData): Promise<boolean | undefined> {
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
         model: requestData.model, // e.g., "gpt-4o"
         max_tokens: requestData.max_tokens, // e.g., 1024
         messages: requestData.messages, // e.g., [{ "role": "user", "content": "Hello, world" }]
+        stream: true,
       },
       {
         headers: {
-          Authorization: `Bearer ${this.apiKey}`, // Correctly use template literals for string interpolation
+          Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
         },
+        responseType: "stream",
       }
     );
 
-    return response.data.choices[0].message.content;
+    return new Promise((resolve, reject) => {
+      let fullResponse = "";
+      let buffer = ""; // Buffer for accumulating chunks
+
+      response.data.on("data", (chunk: Buffer) => {
+        buffer += chunk.toString(); // Add the chunk to the buffer
+
+        let boundary = buffer.indexOf("\n\n"); // Look for the boundary between JSON objects
+
+        while (boundary !== -1) {
+          const jsonStr = buffer.slice(0, boundary).trim(); // Extract the JSON string
+
+          if (jsonStr.startsWith("data:")) {
+            const data = jsonStr.replace(/^data: /, "");
+            if (data !== "[DONE]") {
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices[0].delta.content;
+                if (content) {
+                  fullResponse += content;
+                }
+              } catch (error) {
+                return reject(error); // Handle JSON parse errors
+              }
+            }
+          }
+
+          buffer = buffer.slice(boundary + 2); // Remove processed data from the buffer
+          boundary = buffer.indexOf("\n\n"); // Look for the next boundary
+        }
+      });
+
+      response.data.on("end", () => {
+        console.log(fullResponse);
+        resolve(true); // Resolve the full response when the stream
+      });
+
+      response.data.on("error", (error: any) => {
+        reject(error); // Handle any errors during streaming
+      });
+    });
   }
 }
 
@@ -40,7 +84,7 @@ export class AnthropicCode implements ApiProvider {
     this.apiKey = apiKey;
   }
 
-  async getResponse(requestData: RequestData): Promise<string> {
+  async getResponse(requestData: RequestData): Promise<boolean | undefined> {
     try {
       requestData.messages = convertMessages(requestData.messages);
 
@@ -65,20 +109,25 @@ export class AnthropicCode implements ApiProvider {
       if (axios.isAxiosError(error)) {
         // Axios-specific error handling
         console.error(`HTTP error: ${error.message}`);
+
         if (error.response) {
           // Server responded with a status code outside the 2xx range
-          console.error(`Response data: ${JSON.stringify(error.response)}`);
+          if (DEBUG === true) {
+            console.error(`Response data: ${JSON.stringify(error.response)}`);
+          }
         } else if (error.request) {
           // Request was made but no response was received
-          console.error(`No response received: ${error.request}`);
+          if (DEBUG === true) {
+            console.error(`No response received: ${error.request}`);
+          }
         } else {
           // Something happened while setting up the request
-          console.error(`Axios error setting up request: ${error.message}`);
+          if (DEBUG === true) {
+            console.error(`Axios error setting up request: ${error.message}`);
+          }
         }
+        throw error; // Re-throw the error to be handled by the caller
       }
-
-      // Optionally rethrow the error if you want the calling code to handle it
-      throw error;
     }
   }
 }

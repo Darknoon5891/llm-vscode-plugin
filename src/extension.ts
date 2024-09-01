@@ -234,13 +234,9 @@ export function activate(context: vscode.ExtensionContext) {
 
         try {
           //const apiResponse = await apiProvider.getResponse(requestData);
-          const apiResponse = await apiProvider.getResponse(requestData);
+          const apiResponse = apiProvider.getResponse(requestData);
 
-          editor.edit((editBuilder) => {
-            editBuilder.insert(editor.selection.active, `\n${apiResponse}`);
-          });
-
-          if (DEBUG === true) {
+          if (DEBUG === true && (await apiResponse) === true) {
             console.log("Response inserted from API.");
           }
         } catch (error) {

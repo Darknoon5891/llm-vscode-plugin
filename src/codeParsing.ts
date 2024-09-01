@@ -99,23 +99,23 @@ export function moveCommentsToBottom(
     cursorPosition.line - cleanedCodeInfo.linesRemovedBefore;
 
   // if the cursor is at the end  of the file and its empty we need to move it up one line as the line will have been removed by the whitespace removal
-  EOFfix();
+  //EOFfix();
 
-  const commentRange = detectCommentBoundaries(
-    cleanedCode,
-    newCursorPosition,
-    editorCommentMappings.singleline,
-    editorCommentMappings.multiline,
-    languageId
-  );
+  // const commentRange = detectCommentBoundaries(
+  //   cleanedCode,
+  //   newCursorPosition,
+  //   editorCommentMappings.singleline,
+  //   editorCommentMappings.multiline,
+  //   languageId
+  // );
 
-  if (!commentRange) {
-    // if we don't find a comment, just return all the code
-    return document.getText();
-  }
+  // if (!commentRange) {
+  //   // if we don't find a comment, just return all the code
+  //   return document.getText();
+  // }
 
   // Extract the comment text from the code
-  let commentText = cleanedCode.slice(commentRange.start, commentRange.end);
+  // let commentText = cleanedCode.slice(commentRange.start, commentRange.end);
 
   // Remove the extracted comment from the code
   // cleanedCode = removeStringRange(
@@ -124,18 +124,18 @@ export function moveCommentsToBottom(
   //   commentRange.end
   // );
 
-  commentText = commentText
-    .split("\n")
-    .map((line) => line.trimStart())
-    .join("\n");
+  // commentText = commentText
+  //   .split("\n")
+  //   .map((line) => line.trimStart())
+  //   .join("\n");
 
   // Append the comment to the end of the code
   //cleanedCode += stringPadding + commentText;
 
-  // Tell LLM the line we are on
+  // Tell LLM the line to find its instructions
   cleanedCode +=
     stringPadding +
-    `Follow the instructions found on line: ${(newCursorPosition += 1).toString()}.`;
+    `Follow the instructions found on line: ${newCursorPosition.toString()}.`;
 
   if (DEBUG === true) {
     console.log("Cleaned code:", cleanedCode);
