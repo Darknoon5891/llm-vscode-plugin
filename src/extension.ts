@@ -15,8 +15,8 @@ globalThis.DEBUG = true;
 // add the language to commentMapping in codeParsing.ts
 
 // TODO:
-// API streaming required
 // Add Gemini cause its going to be cracked soon surely
+// For god sake just uses their SKDs and not this mess
 
 export function activate(context: vscode.ExtensionContext) {
   if (DEBUG === true) {
