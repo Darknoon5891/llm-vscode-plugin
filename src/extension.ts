@@ -1,7 +1,12 @@
 import * as vscode from "vscode";
 import { moveCommentsToBottom } from "./codeParsing";
-import { ApiProvider, OpenAICode, AnthropicCode } from "./apiProviders";
-import { RequestData, Message } from "./types";
+import {
+  makeStreamingRequestAnthropic,
+  makeStreamingRequestOpenAI,
+} from "./apiProviders";
+import { RequestData, RequestMessageParam } from "./types";
+import { promises } from "dns";
+import * as helpers from "./helpers";
 
 // Global variable to enable debugging and console logging
 globalThis.DEBUG = true;
@@ -16,7 +21,7 @@ globalThis.DEBUG = true;
 
 // TODO:
 // Add Gemini cause its going to be cracked soon surely
-// For god sake just uses their SKDs and not this mess
+// continual improvement of prompt engineering and code generation stability
 
 export function activate(context: vscode.ExtensionContext) {
   if (DEBUG === true) {
@@ -68,6 +73,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Define the API provider to use
   let selectedModelAPI = "NONE";
+
+  let promiseApiResponse: Promise<boolean>;
 
   // Register command to select OpenAI as the provider
   let selectOpenAICode = vscode.commands.registerCommand(
@@ -134,14 +141,9 @@ export function activate(context: vscode.ExtensionContext) {
       }
       const editor = vscode.window.activeTextEditor;
 
-      let focusedFileType = getFocusedFileType();
+      let focusedFileType = helpers.getFocusedFileType();
 
       if (editor) {
-        // const document = editor.document;
-        // const fileContent = document.getText();
-        // const workspaceFolder =
-        // vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-
         let selectedApiKey: string | undefined;
         let processedCode: string | undefined = moveCommentsToBottom(editor);
 
@@ -183,28 +185,15 @@ export function activate(context: vscode.ExtensionContext) {
         const requestData: RequestData = {
           model: modelConfigData.model,
           max_tokens: modelConfigData.max_tokens,
-          messages: modelConfigData.messages,
+          messagesForRequest: modelConfigData.messages,
         };
-
-        // Choose the AI provider (for example, based on a configuration)
-        let apiProvider: ApiProvider;
 
         if (DEBUG === true) {
           console.log("Debugging Info:");
-        }
-        if (DEBUG === true) {
           console.log("FileContent:", processedCode);
-        }
-        if (DEBUG === true) {
           console.log("RequestData:", requestData);
-        }
-        if (DEBUG === true) {
           console.log("ModelConfigData:", modelConfigData);
-        }
-        if (DEBUG === true) {
           console.log("ProviderType:", selectedModelAPI);
-        }
-        if (DEBUG === true) {
           console.log("FocusedFileType:", focusedFileType);
         }
 
@@ -221,11 +210,17 @@ export function activate(context: vscode.ExtensionContext) {
         switch (selectedModelAPI) {
           case "OpenAICode":
           case "OpenAIHelp":
-            apiProvider = new OpenAICode((await selectedApiKey) || "");
+            promiseApiResponse = makeStreamingRequestOpenAI(
+              (await selectedApiKey) || "",
+              requestData
+            );
             break;
           case "AnthropicCode":
           case "AnthropicHelp":
-            apiProvider = new AnthropicCode((await selectedApiKey) || "");
+            promiseApiResponse = makeStreamingRequestAnthropic(
+              (await selectedApiKey) || "",
+              requestData
+            );
             break;
           default:
             vscode.window.showErrorMessage("Invalid AI provider selected.");
@@ -233,10 +228,9 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         try {
-          //const apiResponse = await apiProvider.getResponse(requestData);
-          const apiResponse = apiProvider.getResponse(requestData);
+          const apiResponse = await promiseApiResponse; // Wait for the API response from the selected provider: true/false
 
-          if (DEBUG === true && (await apiResponse) === true) {
+          if (DEBUG === true && apiResponse === true) {
             console.log("Response inserted from API.");
           }
         } catch (error) {
@@ -305,19 +299,4 @@ export async function getApiKey(
   }
 
   return apiKey;
-}
-
-export function getFocusedFileType(): string | undefined {
-  // Get the active text editor
-  const activeEditor = vscode.window.activeTextEditor;
-
-  if (activeEditor) {
-    // Get the language identifier (file type) of the focused file
-    const languageId = activeEditor.document.languageId;
-    return languageId;
-  } else {
-    // If no editor is active, return undefined
-    vscode.window.showWarningMessage("No file is currently focused.");
-    return undefined;
-  }
 }

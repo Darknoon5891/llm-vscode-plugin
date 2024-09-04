@@ -1,3 +1,9 @@
+import { MessageParam } from "@anthropic-ai/sdk/resources/index.mjs";
+import {
+  ChatCompletionMessage,
+  ChatCompletionMessageParam,
+} from "openai/resources/index.mjs";
+
 declare global {
   interface Global {
     DEBUG: boolean;
@@ -6,7 +12,7 @@ declare global {
   var DEBUG: Global["DEBUG"];
 }
 
-export interface Message {
+export interface RequestMessageParam {
   role: string; // e.g., "user", "system", "assistant"
   content: string; // The actual content of the message
 }
@@ -14,7 +20,19 @@ export interface Message {
 export interface RequestData {
   model: string; // The model to use, e.g., "gpt-3.5-turbo"
   max_tokens: number; // The maximum number of tokens in the response
-  messages: Message[]; // An array of Message objects
+  messagesForRequest: RequestMessageParam[]; // An array of Message objects
+}
+
+export interface OpenAIRequestData {
+  model: string; // The model to use, e.g., "gpt-3.5-turbo"
+  max_tokens: number; // The maximum number of tokens in the response
+  messagesForRequest: ChatCompletionMessageParam[]; // An array of Message objects
+}
+
+export interface AnthropicRequestData {
+  model: string; // The model to use, e.g., "gpt-3.5-turbo"
+  max_tokens: number; // The maximum number of tokens in the response
+  messagesForRequest: MessageParam[]; // An array of Message objects
 }
 
 export interface LineRemovalInfo {

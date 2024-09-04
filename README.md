@@ -21,7 +21,3 @@ This extension provides the following commands:
 - extension.sendToAPI: Sends the code in the active editor to the currently selected AI provider.
 
 See package.json for keyboard shortcuts and you can just change them as you wish.
-
-# Dev Notes
-
-- Can build package with > vsce package
