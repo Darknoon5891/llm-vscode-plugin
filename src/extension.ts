@@ -23,7 +23,8 @@ globalThis.DEBUG = true;
 
 // TODO:
 // Add Gemini cause its going to be cracked soon surely
-// continual improvement of prompt engineering and code generation stability
+// continual improvement of prompt engineering and code generation stability - The current prompt being used should be improved.
+
 export function activate(context: vscode.ExtensionContext) {
   if (DEBUG === true) {
     console.log("LLM Plugin Extension Activated");

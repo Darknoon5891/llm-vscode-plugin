@@ -66,3 +66,18 @@ export function getFocusedFileType(): string | undefined {
     return undefined;
   }
 }
+
+function insertAtMarker(input: string, insertString: string): string {
+  const marker = "{{MARKER}}";
+
+  // Find the marker's position
+  const markerPosition = input.indexOf(marker);
+
+  // If the marker is found, replace it with the insertString
+  if (markerPosition !== -1) {
+    return input.replace(marker, insertString);
+  }
+
+  // If the marker isn't found, return the original string
+  return input;
+}
