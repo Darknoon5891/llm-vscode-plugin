@@ -3,7 +3,7 @@
   "displayName": "llm-vscode-plugin",
   "description": "LLM Extension for VSCode",
   "publisher": "Darknoon5891",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -41,7 +41,7 @@
         },
         "modelConfig.openaihelprompt": {
           "type": "string",
-          "default": "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.",
+          "default": "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.",
           "description": "System Prompt for (Help) OpenAI Requests"
         },
         "modelConfig.anthropiccodeprompt": {
@@ -51,7 +51,7 @@
         },
         "modelConfig.anthropichelpprompt": {
           "type": "string",
-          "default": "You are a helpful assistant. What I have sent are my notes so far. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.",
+          "default": "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.",
           "description": "System Prompt for (Help) Anthropic Requests"
         },
         "modelConfig.anthropicmodel": {

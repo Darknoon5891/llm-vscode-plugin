@@ -13,6 +13,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { resolve } from "path";
+import { getLeadingWhitespace } from "./helpers";
 
 export async function makeStreamingRequestAnthropic(
   apiKey: string,
@@ -58,10 +59,9 @@ export async function makeStreamingRequestAnthropic(
 
           if (content.includes("\n")) {
             // regex to match the \n and replace it with content + \n + eolspace
-            content = content.replace("\n", `\n${eolspace}`);
-            console.log("Content with eolspace:\n", content);
+            // Ensure it replaces all occurrences of \n as two newlines could appear in one message
+            content = content.replaceAll("\n", `\n${eolspace}`);
           }
-
           // Insert the accumulated content
           await editor.edit((editBuilder) => {
             editBuilder.insert(editor.selection.active, content);
@@ -86,6 +86,7 @@ export async function makeStreamingRequestAnthropic(
 
   return true;
 }
+
 export async function makeStreamingRequestOpenAI(
   apiKey: string,
   requestData: RequestData
@@ -96,79 +97,77 @@ export async function makeStreamingRequestOpenAI(
     return false;
   }
 
-  // Get the leading whitespace for the current line
-  let eolSpace = helpers.getLeadingWhitespace();
-  let fullResponse = "";
-  let buffer = ""; // Buffer for accumulating chunks
-  let accumulatedContent = ""; // Buffer to accumulate content before insertion
-  let insertInterval = 50; // Number of chunks to accumulate before inserting
-  let fullContent = ""; // Buffer to accumulate full content
-  let eolFlag = false; // End-Of-Line flag to track if the previous chunk ended with a newline
+  const eolSpace = getLeadingWhitespace();
+  let accumulatedContent = "";
+  const insertInterval = 50; // Number of characters before inserting content
+  let eolFlag = false; // End-of-line flag
 
-  // Initialize the client with the API key
+  // Initialize the OpenAI client with the provided API key
   const client = new OpenAI({
     apiKey: apiKey,
   });
 
-  let openAIRquestData = {
+  let openAIRequestData = {
     model: requestData.model,
     max_tokens: requestData.max_tokens,
-    messagesForRequest:
-      requestData.messagesForRequest as ChatCompletionMessageParam[],
+    messages: requestData.messagesForRequest as ChatCompletionMessageParam[],
   };
 
-  const stream = await client.beta.chat.completions
-    .stream({
-      messages: openAIRquestData.messagesForRequest,
-      model: openAIRquestData.model,
-      max_tokens: openAIRquestData.max_tokens,
+  try {
+    // Call the streaming API using the OpenAI SDK
+    const stream = await client.chat.completions.create({
+      model: openAIRequestData.model,
+      messages: openAIRequestData.messages,
+      max_tokens: openAIRequestData.max_tokens,
       stream: true,
-    })
-    .on("content", async (chunk) => {
-      buffer += chunk.toString(); // Add the chunk to the buffer
-
-      try {
-        let content = chunk;
-        if (eolFlag && content) {
-          // Add missing spaces to the start of the next chunk, only after the flag was set
-          content = content
-            .split("\n")
-            .map((line: string, index: number) => {
-              // Only indent if it's the first line after the flag was set
-              if (index === 0) {
-                return eolSpace + line;
-              }
-              return line;
-            })
-            .join("\n");
-          eolFlag = false; // Reset the flag after adding spaces
-        }
-
-        // Check if the current content ends with a newline to set the EOL flag
-        if (content && content.endsWith("\n")) {
-          eolFlag = true; // Set the flag if the content ends with a newline
-        }
-
-        if (content) {
-          accumulatedContent += content;
-
-          if (accumulatedContent.length > insertInterval) {
-            fullContent += accumulatedContent;
-            // Insert the accumulated content
-            await editor.edit((editBuilder) => {
-              editBuilder.insert(editor.selection.active, accumulatedContent);
-            });
-            accumulatedContent = ""; // Reset accumulated content
-          }
-        }
-      } catch (error) {
-        return false; // Handle JSON parse errors
-      }
-    })
-    .on("error", (error: Error) => {
-      console.error(error);
-      return false;
     });
 
-  return true;
+    // Read the stream response as it arrives in chunks
+    for await (const chunk of stream) {
+      const content = chunk.choices[0].delta?.content || ""; // Extract the content chunk
+
+      if (eolFlag && content) {
+        // Add leading whitespace after a newline
+        const indentedContent = content
+          .split("\n")
+          .map((line: string, index: number) => {
+            if (index === 0) {
+              return eolSpace + line;
+            }
+            return line;
+          })
+          .join("\n");
+
+        accumulatedContent += indentedContent;
+        eolFlag = false;
+      } else {
+        accumulatedContent += content;
+      }
+
+      if (content.endsWith("\n")) {
+        eolFlag = true; // Set flag when content ends with a newline
+      }
+
+      // Insert accumulated content after it exceeds the interval
+      if (accumulatedContent.length >= insertInterval) {
+        await editor.edit((editBuilder) => {
+          editBuilder.insert(editor.selection.active, accumulatedContent);
+        });
+        accumulatedContent = ""; // Clear buffer after insertion
+      }
+    }
+
+    // Insert any remaining content after the stream ends
+    if (accumulatedContent) {
+      await editor.edit((editBuilder) => {
+        editBuilder.insert(editor.selection.active, accumulatedContent);
+      });
+    }
+
+    console.log("Streaming completed successfully.");
+    return true;
+  } catch (error) {
+    console.error("Error making request to OpenAI API:", error);
+    return false;
+  }
 }

@@ -19,10 +19,11 @@ globalThis.DEBUG = true;
 // Instructions to add a new language support:
 // add the language to commentMapping in codeParsing.ts
 
+// To build the extension: vsce package
+
 // TODO:
 // Add Gemini cause its going to be cracked soon surely
 // continual improvement of prompt engineering and code generation stability
-
 export function activate(context: vscode.ExtensionContext) {
   if (DEBUG === true) {
     console.log("LLM Plugin Extension Activated");
