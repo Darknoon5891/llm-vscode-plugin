@@ -14,6 +14,8 @@ import OpenAI from "openai";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import { resolve } from "path";
 import { getLeadingWhitespace } from "./helpers";
+import { resourceUsage } from "process";
+import { request } from "http";
 
 export async function makeStreamingRequestAnthropic(
   apiKey: string,
@@ -32,7 +34,9 @@ export async function makeStreamingRequestAnthropic(
   let requestDataAnthropic: AnthropicRequestData = {
     model: requestData.model,
     max_tokens: requestData.max_tokens,
-    messagesForRequest: helpers.convertMessagesAnthropic(
+    system_prompt: requestData.messagesForRequest[0].content as string,
+    messages_for_request: helpers.convertMessagesAnthropic(
+      requestData.workspace_code,
       requestData.messagesForRequest
     ),
   };
@@ -44,8 +48,9 @@ export async function makeStreamingRequestAnthropic(
     // Start streaming response from the API
     const stream = await client.messages.create({
       model: requestData.model, // e.g., "claude-3-5-sonnet-20240620"
+      system: requestDataAnthropic.system_prompt, // The system messages
       max_tokens: requestData.max_tokens, // e.g., 1024
-      messages: requestDataAnthropic.messagesForRequest, // The conversation or prompts
+      messages: requestDataAnthropic.messages_for_request, // The conversation or prompts
       stream: true, // Enable streaming
     });
 
@@ -110,7 +115,10 @@ export async function makeStreamingRequestOpenAI(
   let openAIRequestData = {
     model: requestData.model,
     max_tokens: requestData.max_tokens,
-    messages: requestData.messagesForRequest as ChatCompletionMessageParam[],
+    messages: helpers.convertMessagesOpenAi(
+      requestData.workspace_code,
+      requestData.messagesForRequest
+    ),
   };
 
   try {

@@ -37,13 +37,16 @@ export function activate(context: vscode.ExtensionContext) {
   const anthropicMaxTokens = config.get<string>("anthropicmaxtokens");
 
   // Predefined engineered prompts for the models
-  const openAiModelSystemPrompt =
-    "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.";
-
   const openAiModelHelpPrompt =
     "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.";
 
-  const anthropicModelSystemPrompt = `You are a code generation assistant. Your task is to generate code based on the provided code and instructions. The code and instructions will be given to you as comments within a code block.
+  const anthropicHelpPrompt =
+    "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.";
+
+  const llmModelSystemPrompt =
+    "You are a code generation assistant tasked with modifying or extending code based on user-provided comments within the code block. Your goal is to analyze, modify, and generate code in strict adherence to the instructions given in the comments without providing any explanation or additional context. You must maintain consistent coding style and formatting, follow best practices, and ensure your generated code is efficient, readable, and integrates seamlessly with the existing code. Output the code without backticks, explanations, or extraneous text.";
+
+  const anthropicModelUserPromptContainer = `You are a code generation assistant. Your task is to generate code based on the provided code and instructions. The code and instructions will be given to you as comments within a code block.
 
 Carefully read through the code and comments. The comments will contain instructions on how to modify or extend the existing code. These instructions may include:
 - Adding new functions or methods
@@ -67,28 +70,51 @@ Here is the code and instructions:
 
 Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this \`\`\` .`;
 
-  const anthropicHelpPrompt =
-    "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.";
+  const openAiModelUserPromptContainer = `You are a code generation assistant. Your task is to generate code based on the provided code and instructions. The code and instructions will be given to you as comments within a code block.
+
+Carefully read through the code and comments. The comments will contain instructions on how to modify or extend the existing code. These instructions may include:
+- Adding new functions or methods
+- Modifying existing functions
+- Implementing specific algorithms or logic
+- Adding error handling or input validation
+- Adhering to specific coding standards or best practices
+
+Follow these steps to complete the task:
+
+1. Analyze the existing code and understand its structure and purpose.
+2. Read the instructions in the comments carefully.
+3. Plan your approach to implementing the requested changes or additions.
+4. Generate the new or modified code according to the instructions.
+5. Ensure that your generated code integrates seamlessly with the existing code.
+
+Remember to follow best practices for the programming language used in the original code, maintain consistent style and formatting, and ensure that your generated code is efficient and readable.
+
+Here is the code and instructions::
+{{MARKER}}
+
+DO NOT regenerate the entire provided codebase only the code requested in the instruction. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this \`\`\` .`;
 
   const modelConfig: { [key: string]: any } = {
     OpenAICode: {
       provider: "OpenAI",
       model: openAiModelType,
       max_tokens: openAiMaxTokens,
-      system_prompt: openAiModelSystemPrompt,
+      user_prompt: openAiModelUserPromptContainer,
+      system_prompt: llmModelSystemPrompt,
     },
     OpenAIHelp: {
       provider: "OpenAI",
       model: openAiModelType,
       max_tokens: openAiMaxTokens,
-      system_prompt: openAiModelSystemPrompt,
+      system_prompt: llmModelSystemPrompt,
       helpful_prompt: openAiModelHelpPrompt,
     },
     AnthropicCode: {
       provider: "Anthropic",
       model: anthropicModelType,
       max_tokens: anthropicMaxTokens,
-      system_prompt: anthropicModelSystemPrompt,
+      user_prompt: anthropicModelUserPromptContainer,
+      system_prompt: llmModelSystemPrompt,
     },
     AnthropicHelp: {
       provider: "Anthropic",
@@ -174,6 +200,8 @@ Do not talk at all. Only output valid code. Do not provide any backticks that su
 
       if (editor) {
         let selectedApiKey: string | undefined;
+
+        // Process the user prompt code
         let processedUserPromptCode: string | undefined = processPrompt(editor);
 
         // processedUserPromptCode will be used as the user prompt to the AI model assuming it is not undefined
@@ -209,7 +237,7 @@ Do not talk at all. Only output valid code. Do not provide any backticks that su
         } else {
           modelConfigData.messages = [
             { role: "system", content: modelConfigData.system_prompt },
-            { role: "user", content: processedUserPromptCode },
+            { role: "user", content: modelConfigData.user_prompt },
           ];
         }
         // Create the requestData object based on the selected model's configuration
@@ -217,6 +245,7 @@ Do not talk at all. Only output valid code. Do not provide any backticks that su
           model: modelConfigData.model,
           max_tokens: modelConfigData.max_tokens,
           messagesForRequest: modelConfigData.messages,
+          workspace_code: processedUserPromptCode,
         };
 
         // Debugging information

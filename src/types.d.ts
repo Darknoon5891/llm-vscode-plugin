@@ -21,6 +21,7 @@ export interface RequestData {
   model: string; // The model to use, e.g., "gpt-3.5-turbo"
   max_tokens: number; // The maximum number of tokens in the response
   messagesForRequest: RequestMessageParam[]; // An array of Message objects
+  workspace_code: string; // The code in the workspace
 }
 
 export interface OpenAIRequestData {
@@ -32,7 +33,8 @@ export interface OpenAIRequestData {
 export interface AnthropicRequestData {
   model: string; // The model to use, e.g., "gpt-3.5-turbo"
   max_tokens: number; // The maximum number of tokens in the response
-  messagesForRequest: MessageParam[]; // An array of Message objects
+  messages_for_request: MessageParam[]; // An array of Message objects
+  system_prompt: string; // The system prompt
 }
 
 export interface LineRemovalInfo {

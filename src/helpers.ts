@@ -1,19 +1,33 @@
 import { MessageParam } from "@anthropic-ai/sdk/resources/index.mjs";
 import { RequestMessageParam } from "./types";
 import * as vscode from "vscode";
+import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 
 // Helper function to convert messages to the format expected by the Anthropic API
 export function convertMessagesAnthropic(
+  workspace_code: string,
   messages: RequestMessageParam[]
 ): MessageParam[] {
   let convertedMessages: MessageParam[] = [];
 
-  const combinedContent = insertAtMarker(
-    messages[0].content,
-    messages[1].content
-  );
+  const combinedContent = insertAtMarker(messages[1].content, workspace_code);
   convertedMessages = [{ role: "user", content: combinedContent }];
   return convertedMessages;
+}
+
+//
+export function convertMessagesOpenAi(
+  workspace_code: string,
+  messages: RequestMessageParam[]
+): ChatCompletionMessageParam[] {
+  let convertedMessages: RequestMessageParam[] = [];
+
+  const combinedContent = insertAtMarker(messages[1].content, workspace_code);
+  convertedMessages = [
+    { role: "user", content: combinedContent },
+    { role: "system", content: messages[0].content },
+  ];
+  return convertedMessages as ChatCompletionMessageParam[];
 }
 
 /**

@@ -99,7 +99,7 @@ export function processPrompt(editor: vscode.TextEditor): string | undefined {
   // Tell LLM the line to find its instructions
   cleanedCode +=
     stringPadding +
-    `Follow the instructions found on line: ${newCursorPosition.toString()}.`;
+    `Follow the instructions found on line: ${newCursorPosition.toString()} of the code.`;
 
   // directly insert the code into the marker here and return the prompt
 
