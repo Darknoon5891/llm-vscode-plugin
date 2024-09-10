@@ -34,26 +34,6 @@
           "default": 4000,
           "description": "Max Tokens for OpenAI"
         },
-        "modelConfig.openaicodeprompt": {
-          "type": "string",
-          "default": "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
-          "description": "System Prompt for (Code) OpenAI Requests"
-        },
-        "modelConfig.openaihelprompt": {
-          "type": "string",
-          "default": "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.",
-          "description": "System Prompt for (Help) OpenAI Requests"
-        },
-        "modelConfig.anthropiccodeprompt": {
-          "type": "string",
-          "default": "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.",
-          "description": "System Prompt for (Code) Anthropic Requests"
-        },
-        "modelConfig.anthropichelpprompt": {
-          "type": "string",
-          "default": "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.",
-          "description": "System Prompt for (Help) Anthropic Requests"
-        },
         "modelConfig.anthropicmodel": {
           "type": "string",
           "default": "claude-3-5-sonnet-20240620",

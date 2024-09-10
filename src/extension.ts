@@ -1,12 +1,11 @@
 import * as vscode from "vscode";
-import { moveCommentsToBottom } from "./codeParsing";
+import * as helpers from "./helpers";
+import { processPrompt as processPrompt } from "./codeParsing";
 import {
   makeStreamingRequestAnthropic,
   makeStreamingRequestOpenAI,
 } from "./apiProviders";
 import { RequestData, RequestMessageParam } from "./types";
-import { promises } from "dns";
-import * as helpers from "./helpers";
 
 // Global variable to enable debugging and console logging
 globalThis.DEBUG = true;
@@ -23,12 +22,10 @@ globalThis.DEBUG = true;
 
 // TODO:
 // Add Gemini cause its going to be cracked soon surely
-// continual improvement of prompt engineering and code generation stability - The current prompt being used should be improved.
+// IMPROVEMENT - The current prompt being used should be improved see new.prompt
 
 export function activate(context: vscode.ExtensionContext) {
-  if (DEBUG === true) {
-    console.log("LLM Plugin Extension Activated");
-  }
+  console.log("LLM Plugin Extension Activated");
 
   // Access the configuration
   const config = vscode.workspace.getConfiguration("modelConfig");
@@ -38,10 +35,40 @@ export function activate(context: vscode.ExtensionContext) {
   const openAiMaxTokens = config.get<string>("openaimaxtokens");
   const anthropicModelType = config.get<string>("anthropicmodel");
   const anthropicMaxTokens = config.get<string>("anthropicmaxtokens");
-  const openAiModelSystemPrompt = config.get<string>("openaicodeprompt");
-  const openAiModelHelpPrompt = config.get<string>("openaihelprompt");
-  const anthropicModelSystemPrompt = config.get<string>("anthropiccodeprompt");
-  const anthropicHelpPrompt = config.get<string>("anthropichelpprompt");
+
+  // Predefined engineered prompts for the models
+  const openAiModelSystemPrompt =
+    "Follow the instruction in the comments that you are sent, only following the latest comments. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this ```.";
+
+  const openAiModelHelpPrompt =
+    "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.";
+
+  const anthropicModelSystemPrompt = `You are a code generation assistant. Your task is to generate code based on the provided code and instructions. The code and instructions will be given to you as comments within a code block.
+
+Carefully read through the code and comments. The comments will contain instructions on how to modify or extend the existing code. These instructions may include:
+- Adding new functions or methods
+- Modifying existing functions
+- Implementing specific algorithms or logic
+- Adding error handling or input validation
+- Adhering to specific coding standards or best practices
+
+Follow these steps to complete the task:
+
+1. Analyze the existing code and understand its structure and purpose.
+2. Read the instructions in the comments carefully.
+3. Plan your approach to implementing the requested changes or additions.
+4. Generate the new or modified code according to the instructions.
+5. Ensure that your generated code integrates seamlessly with the existing code.
+
+Remember to follow best practices for the programming language used in the original code, maintain consistent style and formatting, and ensure that your generated code is efficient and readable.
+
+Here is the code and instructions:
+{{MARKER}}
+
+Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this \`\`\` .`;
+
+  const anthropicHelpPrompt =
+    "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.";
 
   const modelConfig: { [key: string]: any } = {
     OpenAICode: {
@@ -134,6 +161,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // PRIMARY COMMAND: Register command to send the code to the selected AI provider
   let disposable = vscode.commands.registerCommand(
     "extension.sendToAPI",
 
@@ -142,14 +170,14 @@ export function activate(context: vscode.ExtensionContext) {
         console.log("Making API Request to AI provider");
       }
       const editor = vscode.window.activeTextEditor;
-
       let focusedFileType = helpers.getFocusedFileType();
 
       if (editor) {
         let selectedApiKey: string | undefined;
-        let processedCode: string | undefined = moveCommentsToBottom(editor);
+        let processedUserPromptCode: string | undefined = processPrompt(editor);
 
-        if (!processedCode) {
+        // processedUserPromptCode will be used as the user prompt to the AI model assuming it is not undefined
+        if (!processedUserPromptCode) {
           vscode.window.showErrorMessage(
             "Failed to process the workspace code."
           );
@@ -159,6 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
         // Get the configuration for the selected model
         const modelConfigData = modelConfig[selectedModelAPI];
 
+        // Check if a model has been selected
         if (!modelConfigData) {
           vscode.window.showErrorMessage(
             `No model has been selected. Please select a model.`
@@ -175,12 +204,12 @@ export function activate(context: vscode.ExtensionContext) {
                 modelConfigData.helpful_prompt
               } ${helpfulPromptEndComment} ${focusedFileType}${"."}`,
             },
-            { role: "user", content: processedCode },
+            { role: "user", content: processedUserPromptCode },
           ];
         } else {
           modelConfigData.messages = [
             { role: "system", content: modelConfigData.system_prompt },
-            { role: "user", content: processedCode },
+            { role: "user", content: processedUserPromptCode },
           ];
         }
         // Create the requestData object based on the selected model's configuration
@@ -190,9 +219,10 @@ export function activate(context: vscode.ExtensionContext) {
           messagesForRequest: modelConfigData.messages,
         };
 
+        // Debugging information
         if (DEBUG === true) {
           console.log("Debugging Info:");
-          console.log("FileContent:", processedCode);
+          console.log("FileContent:", processedUserPromptCode);
           console.log("RequestData:", requestData);
           console.log("ModelConfigData:", modelConfigData);
           console.log("ProviderType:", selectedModelAPI);
@@ -249,9 +279,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  if (DEBUG === true) {
-    console.log("LLM Plugin Extension Deactivated");
-  }
+  console.log("LLM Plugin Extension Deactivated");
 }
 
 export async function promptAndStoreApiKey(

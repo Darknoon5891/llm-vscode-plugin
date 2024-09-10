@@ -6,21 +6,13 @@ import * as vscode from "vscode";
 export function convertMessagesAnthropic(
   messages: RequestMessageParam[]
 ): MessageParam[] {
-  let systemPrompt = "";
-  const convertedMessages: MessageParam[] = [];
+  let convertedMessages: MessageParam[] = [];
 
-  messages.forEach((message) => {
-    if (message.role === "system") {
-      // Accumulate system prompts
-      systemPrompt += `SYSTEM_PROMPT: ${message.content}\n`;
-    } else if (message.role === "user") {
-      // Prepend system prompt to the user message and reset system prompt
-      const combinedContent = `${systemPrompt}USER_MESSAGE: ${message.content}`;
-      convertedMessages.push({ role: "user", content: combinedContent });
-      systemPrompt = ""; // Reset the system prompt after it's been used
-    }
-  });
-
+  const combinedContent = insertAtMarker(
+    messages[0].content,
+    messages[1].content
+  );
+  convertedMessages = [{ role: "user", content: combinedContent }];
   return convertedMessages;
 }
 

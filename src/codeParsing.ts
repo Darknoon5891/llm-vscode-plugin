@@ -72,9 +72,7 @@ const commentMapping: {
   },
 };
 
-export function moveCommentsToBottom(
-  editor: vscode.TextEditor
-): string | undefined {
+export function processPrompt(editor: vscode.TextEditor): string | undefined {
   if (!editor) {
     vscode.window.showErrorMessage("No active editor found.");
     return;
@@ -102,6 +100,8 @@ export function moveCommentsToBottom(
   cleanedCode +=
     stringPadding +
     `Follow the instructions found on line: ${newCursorPosition.toString()}.`;
+
+  // directly insert the code into the marker here and return the prompt
 
   if (DEBUG === true) {
     console.log("Cleaned code:", cleanedCode);
