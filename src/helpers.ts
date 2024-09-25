@@ -18,15 +18,31 @@ export function convertMessagesAnthropic(
 //
 export function convertMessagesOpenAi(
   workspace_code: string,
-  messages: RequestMessageParam[]
+  messages: RequestMessageParam[],
+  model: string
 ): ChatCompletionMessageParam[] {
   let convertedMessages: RequestMessageParam[] = [];
 
+  // Combine the user message prompt with the workspace code
   const combinedContent = insertAtMarker(messages[1].content, workspace_code);
-  convertedMessages = [
-    { role: "user", content: combinedContent },
-    { role: "system", content: messages[0].content },
-  ];
+
+  // o1 models do not currently support the system message so we remove it
+  if (model === "o1-mini" || model === "o1-preview") {
+    convertedMessages = [{ role: "user", content: combinedContent }];
+  } else {
+    convertedMessages = [
+      { role: "user", content: combinedContent },
+      { role: "system", content: messages[0].content },
+    ];
+  }
+
+  if (DEBUG === true) {
+    console.log(
+      "Converted Message User Prompt: \n",
+      convertedMessages[0].content
+    );
+  }
+
   return convertedMessages as ChatCompletionMessageParam[];
 }
 

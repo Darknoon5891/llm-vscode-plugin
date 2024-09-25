@@ -18,11 +18,11 @@ globalThis.DEBUG = true;
 // Instructions to add a new language support:
 // add the language to commentMapping in codeParsing.ts
 
-// To build the extension: vsce package
-
 // TODO:
 // Add Gemini cause its going to be cracked soon surely
-// IMPROVEMENT - The current prompt being used should be improved see new.prompt
+// https://github.com/google-gemini/generative-ai-js
+
+// BUILD COMMAND: vsce package
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("LLM Plugin Extension Activated");
@@ -68,7 +68,7 @@ Remember to follow best practices for the programming language used in the origi
 Here is the code and instructions:
 {{MARKER}}
 
-Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this \`\`\` .`;
+NEVER regenerate the entire provided codebase only the code requested in the instruction. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this \`\`\` .`;
 
   const openAiModelUserPromptContainer = `You are a code generation assistant. Your task is to generate code based on the provided code and instructions. The code and instructions will be given to you as comments within a code block.
 
@@ -89,10 +89,10 @@ Follow these steps to complete the task:
 
 Remember to follow best practices for the programming language used in the original code, maintain consistent style and formatting, and ensure that your generated code is efficient and readable.
 
-Here is the code and instructions::
+Here is the code and instructions:
 {{MARKER}}
 
-DO NOT regenerate the entire provided codebase only the code requested in the instruction. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. Never ever output backticks like this \`\`\` .`;
+NEVER regenerate the entire provided codebase only the code requested in the instructions. Do not talk at all. Only output valid code. Do not provide any backticks that surround the code. NEVER EVER output backticks like this \`\`\` .`;
 
   const modelConfig: { [key: string]: any } = {
     OpenAICode: {

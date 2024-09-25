@@ -3,7 +3,7 @@
   "displayName": "llm-vscode-plugin",
   "description": "LLM Extension for VSCode",
   "publisher": "Darknoon5891",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -127,6 +127,6 @@
     "@anthropic-ai/sdk": "^0.27.1",
     "axios": "^1.7.4",
     "dotenv": "^16.4.5",
-    "openai": "^4.57.1"
+    "openai": "^4.63.0"
   }
 }

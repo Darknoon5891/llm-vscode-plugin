@@ -99,13 +99,13 @@ export function processPrompt(editor: vscode.TextEditor): string | undefined {
   // Tell LLM the line to find its instructions
   cleanedCode +=
     stringPadding +
-    `Follow the instructions found on line: ${newCursorPosition.toString()} of the code.`;
+    `You must follow the instructions found on line: ${newCursorPosition.toString()} of the code block.`;
 
   // directly insert the code into the marker here and return the prompt
 
-  if (DEBUG === true) {
-    console.log("Cleaned code:", cleanedCode);
-  }
+  // if (DEBUG === true) {
+  //   console.log("Cleaned code:", cleanedCode);
+  // }
   return cleanedCode;
 
   // Helper function to remove whitespace lines from the code
