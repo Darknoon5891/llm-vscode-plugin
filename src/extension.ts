@@ -39,12 +39,6 @@ export function activate(context: vscode.ExtensionContext) {
   const anthropicMaxTokens = config.get<string>("anthropicmaxtokens");
 
   // Predefined engineered prompts for the models
-  const openAiModelHelpPrompt =
-    "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.";
-
-  const anthropicHelpPrompt =
-    "You are a helpful assistant. What I have sent is my code and notes so far. Advise me how to continue to develop my program. You are very curt, yet helpful. Never ever output backticks like this ```. Do not generate code.";
-
   const llmModelSystemPrompt =
     "You are a code generation assistant tasked with modifying or extending code based on user-provided comments within the code block. Your goal is to analyze, modify, and generate code in strict adherence to the instructions given in the comments without providing any explanation or additional context. You must maintain consistent coding style and formatting, follow best practices, and ensure your generated code is efficient, readable, and integrates seamlessly with the existing code. Output the code without backticks, explanations, or extraneous text.";
 
@@ -104,13 +98,6 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
       user_prompt: openAiModelUserPromptContainer,
       system_prompt: llmModelSystemPrompt,
     },
-    OpenAIHelp: {
-      provider: "OpenAI",
-      model: openAiModelType,
-      max_tokens: openAiMaxTokens,
-      system_prompt: llmModelSystemPrompt,
-      helpful_prompt: openAiModelHelpPrompt,
-    },
     AnthropicCode: {
       provider: "Anthropic",
       model: anthropicModelType,
@@ -118,15 +105,7 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
       user_prompt: anthropicModelUserPromptContainer,
       system_prompt: llmModelSystemPrompt,
     },
-    AnthropicHelp: {
-      provider: "Anthropic",
-      model: anthropicModelType,
-      max_tokens: anthropicMaxTokens,
-      helpful_prompt: anthropicHelpPrompt,
-    },
   };
-  const helpfulPromptEndComment =
-    "You must prefix each line with the comment marker for the language which is currently";
 
   // Define the API provider to use
   let selectedModelAPI = "NONE";
@@ -147,20 +126,6 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
     }
   );
 
-  // Register command to select OpenAI as the provider Help
-  let selectOpenAIHelp = vscode.commands.registerCommand(
-    "extension.selectOpenAIHelp",
-    () => {
-      selectedModelAPI = "OpenAIHelp";
-      vscode.window.setStatusBarMessage(
-        "(Help) OpenAI selected as AI provider"
-      );
-      if (DEBUG === true) {
-        console.log("OpenAI selected as AI provider");
-      }
-    }
-  );
-
   // Register command to select Anthropic as the provider
   let selectAnthropicCode = vscode.commands.registerCommand(
     "extension.selectAnthropicCode",
@@ -168,20 +133,6 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
       selectedModelAPI = "AnthropicCode";
       vscode.window.setStatusBarMessage(
         "(Code) Anthropic selected as AI provider"
-      );
-      if (DEBUG === true) {
-        console.log("Anthropic selected as AI provider");
-      }
-    }
-  );
-
-  // Register command to select Anthropic Help as the provider
-  let selectAnthropicHelp = vscode.commands.registerCommand(
-    "extension.selectAnthropicHelp",
-    () => {
-      selectedModelAPI = "AnthropicHelp";
-      vscode.window.setStatusBarMessage(
-        "(Help) Anthropic selected as AI provider"
       );
       if (DEBUG === true) {
         console.log("Anthropic selected as AI provider");
@@ -224,24 +175,12 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
           );
           return;
         }
+        // Create messages for the selected model:
+        modelConfigData.messages = [
+          { role: "system", content: modelConfigData.system_prompt },
+          { role: "user", content: modelConfigData.user_prompt },
+        ];
 
-        // Create messages based on the selected model's configuration (system or helpful prompt)
-        if (selectedModelAPI.includes("Help")) {
-          modelConfigData.messages = [
-            {
-              role: "system",
-              content: `${
-                modelConfigData.helpful_prompt
-              } ${helpfulPromptEndComment} ${focusedFileType}${"."}`,
-            },
-            { role: "user", content: processedUserPromptCode },
-          ];
-        } else {
-          modelConfigData.messages = [
-            { role: "system", content: modelConfigData.system_prompt },
-            { role: "user", content: modelConfigData.user_prompt },
-          ];
-        }
         // Create the requestData object based on the selected model's configuration
         const requestData: RequestData = {
           model: modelConfigData.model,
@@ -272,14 +211,12 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
 
         switch (selectedModelAPI) {
           case "OpenAICode":
-          case "OpenAIHelp":
             promiseApiResponse = makeStreamingRequestOpenAI(
               (await selectedApiKey) || "",
               requestData
             );
             break;
           case "AnthropicCode":
-          case "AnthropicHelp":
             promiseApiResponse = makeStreamingRequestAnthropic(
               (await selectedApiKey) || "",
               requestData

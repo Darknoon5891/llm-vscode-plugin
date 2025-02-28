@@ -3,7 +3,7 @@
   "displayName": "llm-vscode-plugin",
   "description": "LLM Extension for VSCode",
   "publisher": "Darknoon5891",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -52,16 +52,8 @@
         "title": "Send Code to OpenAI"
       },
       {
-        "command": "extension.selectOpenAIHelp",
-        "title": "Helper Request to OpenAI"
-      },
-      {
         "command": "extension.selectAnthropicCode",
         "title": "Send Code to Anthropic"
-      },
-      {
-        "command": "extension.selectAnthropicHelp",
-        "title": "Helper Request to Anthropic"
       },
       {
         "command": "extension.sendToAPI",
@@ -75,18 +67,8 @@
         "when": "editorTextFocus"
       },
       {
-        "command": "extension.selectAnthropicHelp",
-        "key": "ctrl+alt+v",
-        "when": "editorTextFocus"
-      },
-      {
         "command": "extension.selectOpenAICode",
         "key": "ctrl+alt+b",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "extension.selectOpenAIHelp",
-        "key": "ctrl+alt+n",
         "when": "editorTextFocus"
       },
       {
