@@ -128,8 +128,9 @@ export async function makeStreamingRequestOpenAI(
     ),
   };
 
-  // o1 does not currently support the system message or max_tokens or streaming
-  if (requestData.model === "o1-mini" || requestData.model === "o1-preview") {
+  // OpenAI - If the model is an "o" (reasoning model) use max_completion_tokens instead of max_tokens
+  // https://platform.openai.com/docs/guides/reasoning
+  if (requestData.model.substring(0, 1) === "o") {
     try {
       // Call the API using the OpenAI SDK
       const response = await client.chat.completions.create({

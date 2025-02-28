@@ -26,7 +26,7 @@
       "properties": {
         "modelConfig.openaimodel": {
           "type": "string",
-          "default": "gpt-4o",
+          "default": "o3-mini",
           "description": "OpenAI Model Version"
         },
         "modelConfig.openaimaxtokens": {
@@ -36,7 +36,7 @@
         },
         "modelConfig.anthropicmodel": {
           "type": "string",
-          "default": "claude-3-5-sonnet-20240620",
+          "default": "claude-3-7-sonnet-20250219",
           "description": "Anthropic Model Version"
         },
         "modelConfig.anthropicmaxtokens": {

@@ -18,9 +18,11 @@ globalThis.DEBUG = true;
 // Instructions to add a new language support:
 // add the language to commentMapping in codeParsing.ts
 
+// Supported AI providers:
+// See README.md
+
 // TODO:
-// Add Gemini cause its going to be cracked soon surely
-// https://github.com/google-gemini/generative-ai-js
+// Add Gemini cause its going to be cracked soon surely - https://github.com/google-gemini/generative-ai-j
 
 // BUILD COMMAND: vsce package
 
