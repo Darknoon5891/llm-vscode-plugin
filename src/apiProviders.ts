@@ -116,6 +116,7 @@ export async function makeStreamingRequestOpenAI(
   // Initialize the OpenAI client with the provided API key
   const client = new OpenAI({
     apiKey: apiKey,
+    baseURL: "https://api.openai.com/v1/chat/completions",
   });
 
   let openAIRequestData = {
@@ -220,5 +221,99 @@ export async function makeStreamingRequestOpenAI(
       console.error("Error making request to OpenAI API:", error);
       return false;
     }
+  }
+}
+
+//Supports OpenAI & Anthropic APIs have reused OpenAI function.
+export async function makeStreamingRequestxAI(
+  apiKey: string,
+  requestData: RequestData
+): Promise<boolean> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    console.error("No active text editor found");
+    return false;
+  }
+
+  const eolSpace = getLeadingWhitespace();
+  let accumulatedContent = "";
+  const insertInterval = 50; // Number of characters before inserting content
+  let eolFlag = false; // End-of-line flag
+  let stream: Stream<OpenAI.Chat.Completions.ChatCompletionChunk>; // Stream object
+
+  // Initialize the OpenAI client with the provided API key (xAI)
+  // Switch URL to xAI via configuration object and pass though via client
+
+  const client = new OpenAI({
+    apiKey: apiKey,
+    baseURL: "https://api.x.ai/v1",
+  });
+
+  let openAIRequestData = {
+    model: requestData.model,
+    max_tokens: requestData.max_tokens,
+    messages: helpers.convertMessagesOpenAi(
+      requestData.workspace_code,
+      requestData.messagesForRequest,
+      requestData.model
+    ),
+  };
+
+  try {
+    // Call the streaming API using the OpenAI SDK (xAI)
+    stream = await client.chat.completions.create({
+      model: openAIRequestData.model,
+      messages: openAIRequestData.messages,
+      max_tokens: openAIRequestData.max_tokens,
+      stream: true,
+    });
+
+    // Read the stream response as it arrives in chunks
+    for await (const chunk of stream) {
+      const content = chunk.choices[0].delta?.content || ""; // Extract the content chunk
+
+      if (eolFlag && content) {
+        // Add leading whitespace after a newline
+        const indentedContent = content
+          .split("\n")
+          .map((line: string, index: number) => {
+            if (index === 0) {
+              return eolSpace + line;
+            }
+            return line;
+          })
+          .join("\n");
+
+        accumulatedContent += indentedContent;
+        eolFlag = false;
+      } else {
+        accumulatedContent += content;
+      }
+
+      if (content.endsWith("\n")) {
+        eolFlag = true; // Set flag when content ends with a newline
+      }
+
+      // Insert accumulated content after it exceeds the interval
+      if (accumulatedContent.length >= insertInterval) {
+        await editor.edit((editBuilder) => {
+          editBuilder.insert(editor.selection.active, accumulatedContent);
+        });
+        accumulatedContent = ""; // Clear buffer after insertion
+      }
+    }
+
+    // Insert any remaining content after the stream ends
+    if (accumulatedContent) {
+      await editor.edit((editBuilder) => {
+        editBuilder.insert(editor.selection.active, accumulatedContent);
+      });
+    }
+
+    console.log("Streaming completed successfully.");
+    return true;
+  } catch (error) {
+    console.error("Error making request to xAI API:", error);
+    return false;
   }
 }

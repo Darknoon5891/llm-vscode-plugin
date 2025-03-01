@@ -4,6 +4,7 @@ import { processPrompt as processPrompt } from "./codeParsing";
 import {
   makeStreamingRequestAnthropic,
   makeStreamingRequestOpenAI,
+  makeStreamingRequestxAI,
 } from "./apiProviders";
 import { RequestData, RequestMessageParam } from "./types";
 
@@ -23,6 +24,8 @@ globalThis.DEBUG = true;
 
 // TODO:
 // Add Gemini cause its going to be cracked soon surely - https://github.com/google-gemini/generative-ai-j
+// Add Gork - https://x.ai/api
+// Find ways to improve code quality and generation
 
 // BUILD COMMAND: vsce package
 
@@ -37,6 +40,8 @@ export function activate(context: vscode.ExtensionContext) {
   const openAiMaxTokens = config.get<string>("openaimaxtokens");
   const anthropicModelType = config.get<string>("anthropicmodel");
   const anthropicMaxTokens = config.get<string>("anthropicmaxtokens");
+  const xaiModelType = config.get<string>("xaimodel");
+  const xaiMaxTokens = config.get<string>("xaimaxtokens");
 
   // Predefined engineered prompts for the models
   const llmModelSystemPrompt =
@@ -105,6 +110,13 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
       user_prompt: anthropicModelUserPromptContainer,
       system_prompt: llmModelSystemPrompt,
     },
+    xAICode: {
+      provider: "xAI",
+      model: xaiModelType,
+      max_tokens: xaiMaxTokens,
+      user_prompt: openAiModelUserPromptContainer,
+      system_prompt: llmModelSystemPrompt,
+    },
   };
 
   // Define the API provider to use
@@ -136,6 +148,18 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
       );
       if (DEBUG === true) {
         console.log("Anthropic selected as AI provider");
+      }
+    }
+  );
+
+  // Register command to select xAI as the provider
+  let selectxAICode = vscode.commands.registerCommand(
+    "extension.selectxAICode",
+    () => {
+      selectedModelAPI = "xAICode";
+      vscode.window.setStatusBarMessage("(Code) xAI selected as AI provider");
+      if (DEBUG === true) {
+        console.log("xAI selected as AI provider");
       }
     }
   );
@@ -218,6 +242,12 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
             break;
           case "AnthropicCode":
             promiseApiResponse = makeStreamingRequestAnthropic(
+              (await selectedApiKey) || "",
+              requestData
+            );
+            break;
+          case "xAICode":
+            promiseApiResponse = makeStreamingRequestxAI(
               (await selectedApiKey) || "",
               requestData
             );

@@ -15,7 +15,7 @@ export function convertMessagesAnthropic(
   return convertedMessages;
 }
 
-//
+// Helper function to convert messages to the format expected by the OpenAI API
 export function convertMessagesOpenAi(
   workspace_code: string,
   messages: RequestMessageParam[],

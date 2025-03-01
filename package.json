@@ -3,7 +3,7 @@
   "displayName": "llm-vscode-plugin",
   "description": "LLM Extension for VSCode",
   "publisher": "DarkNoon",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -43,6 +43,16 @@
           "type": "integer",
           "default": 4000,
           "description": "Max Tokens for Anthropic"
+        },
+        "modelConfig.xaimodel": {
+          "type": "string",
+          "default": "grok-2-latest",
+          "description": "xAI Model Version"
+        },
+        "modelConfig.xaimaxtokens": {
+          "type": "integer",
+          "default": 4000,
+          "description": "Max Tokens for xAI"
         }
       }
     },
@@ -54,6 +64,10 @@
       {
         "command": "extension.selectAnthropicCode",
         "title": "Send Code to Anthropic"
+      },
+      {
+        "command": "extension.selectxAICode",
+        "title": "Send Code to xAI"
       },
       {
         "command": "extension.sendToAPI",
@@ -69,6 +83,11 @@
       {
         "command": "extension.selectOpenAICode",
         "key": "ctrl+alt+b",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "extension.selectxAICode",
+        "key": "ctrl+alt+v",
         "when": "editorTextFocus"
       },
       {
