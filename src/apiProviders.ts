@@ -116,7 +116,7 @@ export async function makeStreamingRequestOpenAI(
   // Initialize the OpenAI client with the provided API key
   const client = new OpenAI({
     apiKey: apiKey,
-    baseURL: "https://api.openai.com/v1/chat/completions",
+    baseURL: "https://api.openai.com/v1/",
   });
 
   let openAIRequestData = {

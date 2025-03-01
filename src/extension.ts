@@ -8,12 +8,9 @@ import {
 } from "./apiProviders";
 import { RequestData, RequestMessageParam } from "./types";
 
-// Global variable to enable debugging and console logging
-globalThis.DEBUG = true;
-
 // Instructions to add a new AI provider:
-// add config above and function in apiProviders.ts to add a new llm provider.
-// add shortcut key and register command if required.
+// add  config properties below and function in apiProviders.ts to add a new llm provider.
+// add shortcut key in package.json and register command if required.
 // add api key if required.
 
 // Instructions to add a new language support:
@@ -24,13 +21,13 @@ globalThis.DEBUG = true;
 
 // TODO:
 // Add Gemini cause its going to be cracked soon surely - https://github.com/google-gemini/generative-ai-j
-// Add Gork - https://x.ai/api
 // Find ways to improve code quality and generation
 
 // BUILD COMMAND: vsce package
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("LLM Plugin Extension Activated");
+  console.log(`Debug ${DEBUG}`);
 
   // Access the configuration
   const config = vscode.workspace.getConfiguration("modelConfig");

@@ -35,7 +35,7 @@ See package.json for keyboard shortcuts and you can just change them as you wish
 - Claude 3.5 Sonnet v2
 - Claude 3.7 Sonnet
 
-<b>xAI</b>
+<b>xAI:</b>
 
 - Gork
 - Gork 2

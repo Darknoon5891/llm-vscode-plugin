@@ -1,16 +1,28 @@
+// =========================================================
+// types.ts (or types.d.ts if it's just declarations)
+// =========================================================
+/**
+ * MODULE-SCOPED TYPES FILE
+ *
+ * Purpose:
+ * - Contains types, interfaces, etc. that are part of your module system
+ * - Must be explicitly imported where used
+ * - If .ts: Can contain implementation code and will generate JavaScript
+ * - If .d.ts: Contains only declarations, no implementation, no JavaScript output
+ *
+ * Usage:
+ * - Use export for types you want to make available
+ * - Import using: import { TypeName } from "./types";
+ * - Do NOT declare global variables here (use globals.d.ts instead)
+ */
+
 import { MessageParam } from "@anthropic-ai/sdk/resources/index.mjs";
 import {
   ChatCompletionMessage,
   ChatCompletionMessageParam,
 } from "openai/resources/index.mjs";
 
-declare global {
-  interface Global {
-    DEBUG: boolean;
-  }
-
-  var DEBUG: Global["DEBUG"];
-}
+declare const DEBUG: boolean;
 
 export interface RequestMessageParam {
   role: string; // e.g., "user", "system", "assistant"
