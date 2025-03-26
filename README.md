@@ -39,5 +39,6 @@ See package.json for keyboard shortcuts and you can just change them as you wish
 
 - Gork
 - Gork 2
+- Gork 3
 
 Additional models from these providers may work however have not been tested.

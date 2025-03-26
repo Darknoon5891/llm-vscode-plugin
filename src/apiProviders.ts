@@ -9,13 +9,9 @@ import * as helpers from "./helpers";
 import * as vscode from "vscode";
 
 import Anthropic from "@anthropic-ai/sdk";
-
 import OpenAI from "openai";
-import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
-import { resolve } from "path";
+import { GoogleGenAI } from "@google/genai";
 import { getLeadingWhitespace } from "./helpers";
-import { resourceUsage } from "process";
-import { request } from "http";
 import { Stream } from "openai/streaming.mjs";
 
 export async function makeStreamingRequestAnthropic(
@@ -314,6 +310,54 @@ export async function makeStreamingRequestxAI(
     return true;
   } catch (error) {
     console.error("Error making request to xAI API:", error);
+    return false;
+  }
+}
+
+// Google AI Handler
+export async function makeStreamingRequestGoogleAI(
+  apiKey: string,
+  requestData: RequestData
+): Promise<boolean> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    console.error("No active text editor found");
+    return false;
+  }
+
+  const Gai = new GoogleGenAI({ apiKey: apiKey });
+
+  let GoogleAIRequestData = {
+    model: requestData.model,
+    max_tokens: requestData.max_tokens,
+    messages: helpers.convertMessagesGoogleAI(
+      requestData.workspace_code,
+      requestData.messagesForRequest
+    ),
+  };
+
+  try {
+    const response = await Gai.models.generateContentStream({
+      model: GoogleAIRequestData.model,
+      contents: GoogleAIRequestData.messages,
+      config: {
+        maxOutputTokens: GoogleAIRequestData.max_tokens,
+      },
+    });
+
+    for await (const chunk of response) {
+      if (chunk.text !== undefined) {
+        const editorInsertText: string = chunk.text;
+        await editor.edit((editBuilder) => {
+          editBuilder.insert(editor.selection.active, editorInsertText);
+        });
+      }
+    }
+
+    console.log("Streaming completed successfully.");
+    return true;
+  } catch (error) {
+    console.error("Error making request to Google AI API:", error);
     return false;
   }
 }

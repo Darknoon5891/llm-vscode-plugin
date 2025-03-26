@@ -53,6 +53,16 @@
           "type": "integer",
           "default": 4000,
           "description": "Max Tokens for xAI"
+        },
+        "modelConfig.googleaimodel": {
+          "type": "string",
+          "default": "gemini-2.5-pro-exp-03-25",
+          "description": "Google AI Model Version"
+        },
+        "modelConfig.googleaimaxtokens": {
+          "type": "integer",
+          "default": 4000,
+          "description": "Max Tokens for Google AI"
         }
       }
     },
@@ -68,6 +78,10 @@
       {
         "command": "extension.selectxAICode",
         "title": "Send Code to xAI"
+      },
+      {
+        "command": "extension.selectGoogleAICode",
+        "title": "Send Code to Google AI"
       },
       {
         "command": "extension.sendToAPI",
@@ -88,6 +102,11 @@
       {
         "command": "extension.selectxAICode",
         "key": "ctrl+alt+v",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "extension.selectGoogleAICode",
+        "key": "ctrl+alt+n",
         "when": "editorTextFocus"
       },
       {
@@ -126,8 +145,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.1",
+    "@google/genai": "^0.6.1",
     "axios": "^1.7.4",
     "dotenv": "^16.4.5",
-    "openai": "^4.63.0"
+    "openai": "^4.63.0",
+    "win-ca": "^3.5.1"
   }
 }

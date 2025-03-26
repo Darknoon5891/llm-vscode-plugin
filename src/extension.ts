@@ -1,15 +1,18 @@
+require("win-ca"); // Using Windows System Certificate Store
+
 import * as vscode from "vscode";
 import * as helpers from "./helpers";
 import { processPrompt as processPrompt } from "./codeParsing";
 import {
   makeStreamingRequestAnthropic,
+  makeStreamingRequestGoogleAI,
   makeStreamingRequestOpenAI,
   makeStreamingRequestxAI,
 } from "./apiProviders";
 import { RequestData, RequestMessageParam } from "./types";
 
 // Instructions to add a new AI provider:
-// add  config properties below and function in apiProviders.ts to add a new llm provider.
+// add config properties below and function in apiProviders.ts to add a new llm provider.
 // add shortcut key in package.json and register command if required.
 // add api key if required.
 
@@ -20,8 +23,8 @@ import { RequestData, RequestMessageParam } from "./types";
 // See README.md
 
 // TODO:
-// Add Gemini cause its going to be cracked soon surely - https://github.com/google-gemini/generative-ai-j
-// Find ways to improve code quality and generation
+// Add Gemini cause its going to be cracked soon surely - https://github.com/google-gemini/generative-ai-j - ITS TIME
+// Find ways to improve code quality and UX
 
 // BUILD COMMAND: vsce package
 
@@ -39,6 +42,8 @@ export function activate(context: vscode.ExtensionContext) {
   const anthropicMaxTokens = config.get<string>("anthropicmaxtokens");
   const xaiModelType = config.get<string>("xaimodel");
   const xaiMaxTokens = config.get<string>("xaimaxtokens");
+  const GoogleAIModelType = config.get<string>("googleaimodel");
+  const GoogleAIMaxTokens = config.get<string>("googleaimaxtokens");
 
   // Predefined engineered prompts for the models
   const llmModelSystemPrompt =
@@ -114,6 +119,13 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
       user_prompt: openAiModelUserPromptContainer,
       system_prompt: llmModelSystemPrompt,
     },
+    GoogleAICode: {
+      provider: "GoogleAI",
+      model: GoogleAIModelType,
+      max_tokens: GoogleAIMaxTokens,
+      user_prompt: openAiModelUserPromptContainer,
+      system_prompt: llmModelSystemPrompt,
+    },
   };
 
   // Define the API provider to use
@@ -122,44 +134,43 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
   let promiseApiResponse: Promise<boolean>;
 
   // Register command to select OpenAI as the provider
-  let selectOpenAICode = vscode.commands.registerCommand(
-    "extension.selectOpenAICode",
-    () => {
-      selectedModelAPI = "OpenAICode";
-      vscode.window.setStatusBarMessage(
-        "(Code) OpenAI selected as AI provider"
-      );
-      if (DEBUG === true) {
-        console.log("OpenAI selected as AI provider");
-      }
+  vscode.commands.registerCommand("extension.selectOpenAICode", () => {
+    selectedModelAPI = "OpenAICode";
+    vscode.window.setStatusBarMessage("(Code) OpenAI selected as AI provider");
+    if (DEBUG === true) {
+      console.log("OpenAI selected as AI provider");
     }
-  );
+  });
 
   // Register command to select Anthropic as the provider
-  let selectAnthropicCode = vscode.commands.registerCommand(
-    "extension.selectAnthropicCode",
-    () => {
-      selectedModelAPI = "AnthropicCode";
-      vscode.window.setStatusBarMessage(
-        "(Code) Anthropic selected as AI provider"
-      );
-      if (DEBUG === true) {
-        console.log("Anthropic selected as AI provider");
-      }
+  vscode.commands.registerCommand("extension.selectAnthropicCode", () => {
+    selectedModelAPI = "AnthropicCode";
+    vscode.window.setStatusBarMessage(
+      "(Code) Anthropic selected as AI provider"
+    );
+    if (DEBUG === true) {
+      console.log("Anthropic selected as AI provider");
     }
-  );
+  });
 
   // Register command to select xAI as the provider
-  let selectxAICode = vscode.commands.registerCommand(
-    "extension.selectxAICode",
-    () => {
-      selectedModelAPI = "xAICode";
-      vscode.window.setStatusBarMessage("(Code) xAI selected as AI provider");
-      if (DEBUG === true) {
-        console.log("xAI selected as AI provider");
-      }
+  vscode.commands.registerCommand("extension.selectxAICode", () => {
+    selectedModelAPI = "xAICode";
+    vscode.window.setStatusBarMessage("(Code) xAI selected as AI provider");
+    if (DEBUG === true) {
+      console.log("xAI selected as AI provider");
     }
-  );
+  });
+  // Register command to select Google AI as the provider
+  vscode.commands.registerCommand("extension.selectGoogleAICode", () => {
+    selectedModelAPI = "GoogleAICode";
+    vscode.window.setStatusBarMessage(
+      "(Code) GoogleAICode selected as AI provider"
+    );
+    if (DEBUG === true) {
+      console.log("Google AI selected as AI provider");
+    }
+  });
 
   // PRIMARY COMMAND: Register command to send the code to the selected AI provider
   let disposable = vscode.commands.registerCommand(
@@ -210,7 +221,7 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
           workspace_code: processedUserPromptCode,
         };
 
-        // Debugging information
+        // Debugging information (console.log)
         if (DEBUG === true) {
           console.log("Debugging Info:");
           console.log("FileContent:", processedUserPromptCode);
@@ -245,6 +256,12 @@ NEVER regenerate the entire provided codebase only the code requested in the ins
             break;
           case "xAICode":
             promiseApiResponse = makeStreamingRequestxAI(
+              (await selectedApiKey) || "",
+              requestData
+            );
+            break;
+          case "GoogleAICode":
+            promiseApiResponse = makeStreamingRequestGoogleAI(
               (await selectedApiKey) || "",
               requestData
             );

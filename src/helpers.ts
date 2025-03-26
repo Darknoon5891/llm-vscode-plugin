@@ -46,6 +46,16 @@ export function convertMessagesOpenAi(
   return convertedMessages as ChatCompletionMessageParam[];
 }
 
+// Concatenates system message (workspace_code) and user message into a single string for GoogleAI, with system message first.
+export function convertMessagesGoogleAI(
+  workspace_code: string,
+  messages: RequestMessageParam[]
+): string {
+  const userContent = messages[1].content;
+  const combinedContent = workspace_code + "\n\n" + userContent;
+  return combinedContent;
+}
+
 /**
  * Gets the amount of whitespace in front of the current cursor position on the current line.
  * @returns The number of leading whitespace characters.
